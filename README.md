@@ -1,2 +1,4 @@
-# GSE_HONGSEONGJUN_3_2013156049
-GSE_HONGSEONGJUN_3_2013156049
+# FairyTale : Virus
+
+2013156049 홍승준 : Mobile Application, Game System Design, Game logic 
+2013156019 민웅기 : Game Application, Graphic Design
