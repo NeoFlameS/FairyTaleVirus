@@ -1,0 +1,7 @@
+*.pdb
+*.idb
+*.pch
+*.obj
+*.log
+*.ese
+.vs/
