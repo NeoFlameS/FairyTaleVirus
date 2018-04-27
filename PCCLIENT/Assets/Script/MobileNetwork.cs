@@ -29,8 +29,8 @@ public class MobileNetwork : MonoBehaviour {
         recvbuf[2] = new byte[NetworkController.MAXBUFFERSIZE];
         recvbuf[3] = new byte[NetworkController.MAXBUFFERSIZE];
         DontDestroyOnLoad (gameObject);
-		CC = GameObject.Find("Cursor Manager").GetComponent<CursorControl>();
-		sck = new Socket (AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+        if (null == CC) CC = GameObject.Find("Cursor Manager(Clone)").GetComponent<CursorControl>();
+        sck = new Socket (AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
 		sck.Bind (new IPEndPoint (IPAddress.Any, 8080));
         sck.Listen(5);
         sck.BeginAccept(AcceptCallback,null);
@@ -106,7 +106,7 @@ public class MobileNetwork : MonoBehaviour {
                 }
                 CS_CONNECT_PACKET res = (CS_CONNECT_PACKET)recvobj;
 
-                obj.nickname = res.nickname;
+                CC.nickname[res.id] = res.nickname;
             }
 
             else if (obj.recv_signal == NetworkController.CS_MOVE)
@@ -132,7 +132,7 @@ public class MobileNetwork : MonoBehaviour {
                 }
                 CS_BUTTON_PACKET res = (CS_BUTTON_PACKET)recvobj;
 
-                CC.click(res.id);
+                CC.click(res.id, res.btn_number);
             }
         }
     }

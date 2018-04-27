@@ -1,7 +1,9 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
+# Visual Studio 2015
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PCCLIENT", "PCCLIENT.csproj", "{E79661E4-694A-5ABF-F945-CEEC6600B0A1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PCCLIENT.Editor", "PCCLIENT.Editor.csproj", "{FA5671C6-D14D-EB0D-8268-A7B8BEDC8DE2}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -13,6 +15,10 @@ Global
 		{E79661E4-694A-5ABF-F945-CEEC6600B0A1}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E79661E4-694A-5ABF-F945-CEEC6600B0A1}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E79661E4-694A-5ABF-F945-CEEC6600B0A1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FA5671C6-D14D-EB0D-8268-A7B8BEDC8DE2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FA5671C6-D14D-EB0D-8268-A7B8BEDC8DE2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FA5671C6-D14D-EB0D-8268-A7B8BEDC8DE2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FA5671C6-D14D-EB0D-8268-A7B8BEDC8DE2}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
