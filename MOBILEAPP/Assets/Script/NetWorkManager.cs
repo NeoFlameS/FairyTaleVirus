@@ -16,7 +16,9 @@ public class NetWorkManager : MonoBehaviour {
     int state;
     string name;
     string ip;
-    public char cli_id;
+
+    public SC_CONNECT_PACKET My_Info;
+    
     //소켓 관련 변수
     NetworkController NetFunc;
     Socket sck;
@@ -31,7 +33,8 @@ public class NetWorkManager : MonoBehaviour {
         state = 0;
         name = "No Name";
         ip = "Wrong IP";
-        cli_id = 'a';
+        My_Info.id = 'e';
+        My_Info.color = 'n';
         DontDestroyOnLoad(gameObject);
         
 
@@ -100,7 +103,7 @@ public class NetWorkManager : MonoBehaviour {
         SCpack = (SC_CONNECT_PACKET)obj; 
 
         Debug.Log((int)SCpack.id + " " + SCpack.color);
-        cli_id = SCpack.id;
+        My_Info = SCpack;
         //시그널 전송
         NetFunc.net_send_signal(NetworkController.CS_CONNECT,sck);
 
@@ -120,17 +123,20 @@ public class NetWorkManager : MonoBehaviour {
         return 1;
     }
 
-    public int GameDataSend(object o) {//게임 진행 중 데이터 송신 메소드
+    public int GameDataSend(object o,byte s) {//게임 진행 중 데이터 송신 메소드
 
+        NetFunc.net_send_signal(s,sck);
         NetFunc.net_send(o, sck);
 
         return 0;
     }
-
+   
     public object GameDataRecv()
     {//게임 진행 중 데이터 수신 메소드
         object obj;
+        char type;
 
+        type = NetFunc.net_recv_signal(sck);
         obj = NetFunc.net_recv(sck);
 
         return obj; 

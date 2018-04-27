@@ -14,6 +14,9 @@ public class Cursor : MonoBehaviour
     public Text time;
     public Text World;
 
+    //이미지 설정
+    public Image pad_img;
+
     //네트워크 통신용 
     DateTime frame;
     NetWorkManager nm;
@@ -37,15 +40,21 @@ public class Cursor : MonoBehaviour
         c = Camera.main;
         cur = GameObject.Find("Cursor");
 
+        //이미지 변수 초기화
+        
+
         //좌표 변수들
         startpos = cur.transform.position;
         startpos_screen=c.WorldToScreenPoint(startpos);
         now_pos = cur.transform.position;
-        Vector3 v = new Vector3();//패드 계산용
+        v = new Vector3();//패드 계산용
 
         //네트워크 통신용 변수 초기화
         nm = GameObject.Find("NetWorkManager").GetComponent<NetWorkManager>();//네트워크 매니저 오브젝트에 접근 클래스 불러오기
         frame = DateTime.Now;
+
+        string img_path = "Img/pad_"+nm.My_Info.color;
+        pad_img.sprite = Resources.Load<Sprite>(img_path) as Sprite;
     }
 
     // Update is called once per frame
@@ -116,14 +125,14 @@ public class Cursor : MonoBehaviour
 
             frame = DateTime.Now;
             CS_MOVE_PACKET mov;
-            mov.id = nm.cli_id;
+            mov.id = nm.My_Info.id;
 
             
             mov.movevector.x = (x - startpos_screen.x)/(Screen.width / 4);
             mov.movevector.y = (y - startpos_screen.y)/(Screen.height / 3);
 
 
-            nm.GameDataSend(mov);
+            nm.GameDataSend(mov, NetworkController.CS_MOVE);
         }
     }
 
@@ -135,14 +144,14 @@ public class Cursor : MonoBehaviour
 
             frame = DateTime.Now;
             CS_MOVE_PACKET mov;
-            mov.id = nm.cli_id;
+            mov.id = nm.My_Info.id;
 
 
             mov.movevector.x = 0;
             mov.movevector.y = 0;
 
 
-            nm.GameDataSend(mov);
+            nm.GameDataSend(mov, NetworkController.CS_MOVE);
         }
     }
 
@@ -151,10 +160,10 @@ public class Cursor : MonoBehaviour
         if (DateTime.Now.Millisecond - frame.Millisecond >= 33 || DateTime.Now.Millisecond - frame.Millisecond < -33) {
             frame = DateTime.Now;
             CS_BUTTON_PACKET bt;
-            bt.id = nm.cli_id;
+            bt.id = nm.My_Info.id;
             bt.btn_number = '0';
 
-            nm.GameDataSend(bt);
+            nm.GameDataSend(bt, NetworkController.CS_MOVE);
         }
 
         return;
@@ -166,10 +175,10 @@ public class Cursor : MonoBehaviour
         {
             frame = DateTime.Now;
             CS_BUTTON_PACKET bt;
-            bt.id = nm.cli_id;
+            bt.id = nm.My_Info.id;
             bt.btn_number = '1';
 
-            nm.GameDataSend(bt);
+            nm.GameDataSend(bt, NetworkController.CS_MOVE);
         }
         return;
     }
@@ -180,10 +189,10 @@ public class Cursor : MonoBehaviour
         {
             frame = DateTime.Now;
             CS_BUTTON_PACKET bt;
-            bt.id = nm.cli_id;
+            bt.id = nm.My_Info.id;
             bt.btn_number = '2';
 
-            nm.GameDataSend(bt);
+            nm.GameDataSend(bt, NetworkController.CS_MOVE);
         }
         return;
     }
@@ -194,10 +203,10 @@ public class Cursor : MonoBehaviour
         {
             frame = DateTime.Now;
             CS_BUTTON_PACKET bt;
-            bt.id = nm.cli_id;
+            bt.id = nm.My_Info.id;
             bt.btn_number = '3';
 
-            nm.GameDataSend(bt);
+            nm.GameDataSend(bt, NetworkController.CS_MOVE);
         }
         return;
     }
