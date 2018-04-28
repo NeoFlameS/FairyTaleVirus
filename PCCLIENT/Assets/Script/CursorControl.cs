@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine.UI;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class CursorControl : MonoBehaviour {
 
@@ -20,6 +21,7 @@ public class CursorControl : MonoBehaviour {
     public string[] nickname = new string[4];
 
     void OnLevelWasLoaded() {
+        if (7 == SceneManager.GetActiveScene().buildIndex) Destroy(this);
         cursor[0] = GameObject.Find("Cursor");
         cursor[1] = GameObject.Find("Cursor2");
         cursor[2] = GameObject.Find("Cursor3");
@@ -37,8 +39,8 @@ public class CursorControl : MonoBehaviour {
         cursor[3] = GameObject.Find("Cursor4");
     }
 
-    public void move(Vector2 force, int playernumber){
-        Vector2 v = new Vector2(30 * (scx / 1920) * force.x, 30 * (scy / 1080) * force.y);
+    public void move(float x, float y, int playernumber){
+        Vector2 v = new Vector2(30 * (scx / 1920) * x, 30 * (scy / 1080) * y);
         cursormovevector[playernumber] = v;
     }
 
@@ -96,6 +98,10 @@ public class CursorControl : MonoBehaviour {
                     break;
             }
         }
+    }
+
+    public void disconnected(int id) {
+        // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     }
 
     public bool characterallselected() {

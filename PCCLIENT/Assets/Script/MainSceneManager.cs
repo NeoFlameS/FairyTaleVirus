@@ -32,6 +32,7 @@ public class MainSceneManager : MonoBehaviour {
 
             if (125 != ch[i].ch_type) PI[i].connected = true;
             PI[i].nickname = CC.nickname[i];
+            CS.nickname[i] = CC.nickname[i];
             PI[i].level = ch[i].clearedround;
             PI[i].ch_type = ch[i].ch_type;
 

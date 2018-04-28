@@ -17,7 +17,6 @@ public class SelectManager : MonoBehaviour {
 
     public void Start()
     {
-        Debug.Log("START");
         DontDestroyOnLoad(this);
         savedata = new SAVEDATA();
         savedata.CharacterData = new CHARACTERDATA[9];
@@ -34,7 +33,6 @@ public class SelectManager : MonoBehaviour {
 
     public void OnLevelWasLoaded()
     {
-        Debug.Log("ONLEVELWASLOADED");
         if (2 != SceneManager.GetActiveScene().buildIndex) return;
         for (int i = 0; i < 9; ++i)
         {

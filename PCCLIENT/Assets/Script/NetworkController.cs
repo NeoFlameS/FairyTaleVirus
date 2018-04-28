@@ -39,6 +39,8 @@ public class NetworkController : MonoBehaviour
     //라운드 정보 = 캐릭터 이동명령(포인터 위치) + 몬스터 위치 + 오염도 수치 + 공유자원 따로 보냄
     //char -> byte 변경
 
+        
+
     void Start(){
 		DontDestroyOnLoad (gameObject);
 	}
@@ -87,16 +89,77 @@ public class NetworkController : MonoBehaviour
 		return true;
 	}
 
-	public bool net_send(object data, Socket s)
-	{
-		byte[] send_data = ObjToByte(data);
-		if (send_data == null) return false;
-		s.Send(send_data);
+    public bool net_send(object data, Socket s, byte type)
+    {
+        byte[] send_data = ObjToByte(data);
+        switch (type)
+        {
+            case CS_CONNECT:
+                if (send_data.Length != 116)
+                {
+                    Debug.Log("net_send 오류 byte array의 길이가 표준치와 다릅니다. 패킷의 길이를 확인하세요. 원래 116 현재 패킷 길이 " + send_data.Length);
+                    return false;
+                }
+                break;
+            case CS_MOVE:
+                if (send_data.Length != 89)
+                {
+                    Debug.Log("net_send 오류 byte array의 길이가 표준치와 다릅니다. 패킷의 길이를 확인하세요.원래 89 현재 패킷 길이 " + send_data.Length);
+                    return false;
+                }
+                break;
+            case CS_BTN:
+                if (send_data.Length != 89)
+                {
+                    Debug.Log("net_send 오류 byte array의 길이가 표준치와 다릅니다. 패킷의 길이를 확인하세요.원래 89 현재 패킷 길이 " + send_data.Length);
+                    return false;
+                }
+                break;
+            case SC_CONNECT:
+                if (send_data.Length != 85)
+                {
+                    Debug.Log("net_send 오류 byte array의 길이가 표준치와 다릅니다. 패킷의 길이를 확인하세요.원래 85 현재 패킷 길이 " + send_data.Length);
+                    return false;
+                }
+                break;
+            case SC_CHARACTERINFO:
+                if (send_data.Length != 199)
+                {
+                    Debug.Log("net_send 오류 byte array의 길이가 표준치와 다릅니다. 패킷의 길이를 확인하세요.원래 199 현재 패킷 길이 " + send_data.Length);
+                    return false;
+                }
+                break;
+            case SC_CHARACTERINFOSET:
+                if (send_data.Length != 404)
+                {
+                    Debug.Log("net_send 오류 byte array의 길이가 표준치와 다릅니다. 패킷의 길이를 확인하세요.원래 404 현재 패킷 길이 " + send_data.Length);
+                    return false;
+                }
+                break;
+            case SC_SKILLSET:
+                if (send_data.Length != 80)
+                {
+                    Debug.Log("net_send 오류 byte array의 길이가 표준치와 다릅니다. 패킷의 길이를 확인하세요.원래 80 현재 패킷 길이 " + send_data.Length);
+                    return false;
+                }
+                break;
+            case SC_SCENECHANGE:
+                if (send_data.Length != 91)
+                {
+                    Debug.Log("net_send 오류 byte array의 길이가 표준치와 다릅니다. 패킷의 길이를 확인하세요.원래 91 현재 패킷 길이 " + send_data.Length);
+                    return false;
+                }
+                break;
+            default:
+                return false;
+        }
+        if (send_data == null) return false;
+        s.Send(send_data);
 
-		return true;
-	}
+        return true;
+    }
 
-	public char net_recv_signal(Socket s)
+    public char net_recv_signal(Socket s)
 	{
 		byte[] Buf = new byte[MAXBUFFERSIZE];
 
@@ -122,6 +185,7 @@ public class NetworkController : MonoBehaviour
 [Serializable]
 public struct CS_CONNECT_PACKET {
 	public char id;
+    public byte namelength;
 	public string nickname;
 }
 
@@ -134,7 +198,8 @@ public struct SC_CONNECT_PACKET {
 [Serializable]
 public struct CS_MOVE_PACKET {
 	public char id;
-	public Vector2 movevector;
+    public float x;
+    public float y;
 }
 
 [Serializable]
