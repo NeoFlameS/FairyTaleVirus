@@ -53,7 +53,8 @@ public class Cursor : MonoBehaviour
         nm = GameObject.Find("NetWorkManager").GetComponent<NetWorkManager>();//네트워크 매니저 오브젝트에 접근 클래스 불러오기
         frame = DateTime.Now;
 
-        string img_path = "Img/pad_"+nm.My_Info.color;
+        string img_path = "Img/ControllUI/pad_"+nm.My_Info.color;
+        Debug.Log("Pad Color path : "+img_path);
         pad_img.sprite = Resources.Load<Sprite>(img_path) as Sprite;
     }
 
@@ -90,10 +91,10 @@ public class Cursor : MonoBehaviour
                 }
 
 
-                if (now.position.x < Screen.width / 2 && now.position.y < 2 * Screen.height / 3)
+                if (now.position.x < (Screen.width / 2)-100 && now.position.y < 3 * Screen.height / 4)
                 {
                     pad_index = i;
-                    float x, y, z;
+                    //float x, y, z;
                     Error.text = "Pad Touch";
                     PadTouch(now.position.x, now.position.y, startpos.z);
                 }
@@ -128,8 +129,8 @@ public class Cursor : MonoBehaviour
             mov.id = nm.My_Info.id;
 
             
-            mov.movevector.x = (x - startpos_screen.x)/(Screen.width / 4);
-            mov.movevector.y = (y - startpos_screen.y)/(Screen.height / 3);
+            mov.x = (x - startpos_screen.x)/(Screen.width / 4);
+            mov.y = (y - startpos_screen.y)/(Screen.height / 3);
 
 
             nm.GameDataSend(mov, NetworkController.CS_MOVE);
@@ -147,8 +148,8 @@ public class Cursor : MonoBehaviour
             mov.id = nm.My_Info.id;
 
 
-            mov.movevector.x = 0;
-            mov.movevector.y = 0;
+            mov.x = 0;
+            mov.y = 0;
 
 
             nm.GameDataSend(mov, NetworkController.CS_MOVE);
@@ -210,4 +211,5 @@ public class Cursor : MonoBehaviour
         }
         return;
     }
+
 }

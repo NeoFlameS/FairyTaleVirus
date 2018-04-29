@@ -35,34 +35,22 @@ public class MobileNetwork : MonoBehaviour {
 
         byte[][] recvbuf = new byte[4][];
     // Use this for initialization
-    void Start ()
+    void Start()
     {
         NC = this.GetComponent<NetworkController>();
-        recvbuf[1] = new byte[NetworkController.MAXBUFFERSIZE];
-        recvbuf[2] = new byte[NetworkController.MAXBUFFERSIZE];
-        recvbuf[3] = new byte[NetworkController.MAXBUFFERSIZE];
-        DontDestroyOnLoad (gameObject);
+        DontDestroyOnLoad(gameObject);
         if (null == CC) CC = GameObject.Find("Cursor Manager(Clone)").GetComponent<CursorControl>();
-        
-        IPHostEntry ipHostInfo = Dns.GetHostEntry(Dns.GetHostName());
-        IPAddress ipAddress = ipHostInfo.AddressList[0];
-        IPEndPoint localEndPoint = new IPEndPoint(ipAddress, 8080);
-        
-        sck = new Socket (ipAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-		sck.Bind (localEndPoint);
+
+        sck = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+        sck.Bind(new IPEndPoint(IPAddress.Any, 8080));
         sck.Listen(100);
-        while (true) {
-            allDone.Reset();
 
-            sck.BeginAccept(new AsyncCallback(AcceptCallback), sck);
-
-            allDone.WaitOne();
-        }
+        sck.BeginAccept(new AsyncCallback(AcceptCallback), sck);
     }
 
     void AcceptCallback(IAsyncResult ar)
     {
-        allDone.Set();
+       
         
         Socket listener = (Socket)ar.AsyncState;
         Socket handler = listener.EndAccept(ar);
@@ -108,7 +96,7 @@ public class MobileNetwork : MonoBehaviour {
         iaclient.recvbyte = 0;
         clients.Add(iaclient);
         handler.BeginReceive(iaclient.recvbuf, 0, NetworkController.MAXBUFFERSIZE, 0, new AsyncCallback(DataReceive), iaclient);
-        sck.BeginAccept(AcceptCallback, null);
+        sck.BeginAccept(new AsyncCallback(AcceptCallback), listener);
     }
     
     //받은 데이터 체크 꼭 할것!!!!
@@ -119,9 +107,9 @@ public class MobileNetwork : MonoBehaviour {
 
         int bytesRead = handler.EndReceive(ar);
         obj.recvbyte += bytesRead;
-
+        Debug.Log("DataReceived");
         //길이 맞는지 확인해보고
-        if (obj.recvbyte > 0)
+        if (obj.recvbyte > 0 || bytesRead > 0)
         {
             if (true == obj.signalread)
             {
@@ -155,6 +143,7 @@ public class MobileNetwork : MonoBehaviour {
                 CS_CONNECT_PACKET res = (CS_CONNECT_PACKET)recvobj;
 
                 CC.nickname[res.id] = res.nickname;
+                    Debug.Log(res.nickname);
             }
 
             else if (obj.recv_signal == NetworkController.CS_MOVE && obj.recvbyte >= 89)
@@ -171,6 +160,8 @@ public class MobileNetwork : MonoBehaviour {
 
                 if (false == isgamescene) CC.move(res.x, res.y, res.id);
                 else GS.move(res.x, res.y, res.id);
+
+                    Debug.Log(res.x + res.y + res.id);
 
             }
             else if (obj.recv_signal == NetworkController.CS_BTN && obj.recvbyte >= 89)
