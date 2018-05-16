@@ -64,6 +64,13 @@ public class ButtonAction : MonoBehaviour {
                 //skill back
                 GameObject.Find("SoloPlay Scene Manager").GetComponent<SoloPlaySceneManager>().cancleSkill();
                 break;
+            case 10:
+                //difficulty select
+                GameObject.Find("SoloPlay Scene Manager").GetComponent<SoloPlaySceneManager>().changeDifficulty(SceneorPopup[0]);
+                break;
+            case 11:
+                GameObject.Find("SoloPlay Scene Manager").GetComponent<SoloPlaySceneManager>().LoadScene();
+                break;
             default:
                 break;
         }

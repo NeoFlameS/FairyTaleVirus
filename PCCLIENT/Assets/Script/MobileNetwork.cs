@@ -92,7 +92,6 @@ public class MobileNetwork : MonoBehaviour {
         }
         Debug.Log("Player Color : "+packet.color);
         NC.net_send(packet, handler, NetworkController.SC_CONNECT);
-        
         connected[id] = true;
 
         IAsyncClient iaclient = new IAsyncClient();
@@ -205,8 +204,8 @@ public class MobileNetwork : MonoBehaviour {
                     else GS.move(res.x, res.y, res.id);
                     obj.recv_signal = NetworkController.S_NULL;
                     obj.signalread = true;
-
                 }
+
                 else if (obj.recv_signal == NetworkController.CS_BTN && obj.recvbyte >= 89)
                 {
                     Buffer.BlockCopy(obj.recvbuf, 0, obj.cbuf, 0, 89);
@@ -238,8 +237,6 @@ public class MobileNetwork : MonoBehaviour {
                 }//여기까지
             }
         }
-
-            
         handler.BeginReceive(obj.recvbuf, obj.recvbyte, NetworkController.MAXBUFFERSIZE - obj.recvbyte, 0, new AsyncCallback(DataReceive), obj);
     }
 }

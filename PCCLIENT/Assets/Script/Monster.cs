@@ -53,11 +53,37 @@ public class Monster : MonoBehaviour {
         goal = GameObject.Find("Oak_Tree").transform.position;
     }
 
+    public void init(byte round, byte stage, int usernumber, int type)
+    {
+        int hpfactor = (1 + (((round + stage - 1) * (round + stage - 1) / 4 + 1) / 10)) * 40;
+        mon_type = type;
+        float randnum = (type+2)/2;
+
+        double hpfactor2 = 1 + ((usernumber - 1) * 0.1);
+
+        mon_hpMax = (int)(hpfactor * randnum * hpfactor2);
+        mon_hpNow = mon_hpMax;
+        mon_basemovespd = (int)(30 - (randnum * 10));
+        mon_movespd = mon_basemovespd;
+        for (int i = 0; i < 4; ++i)
+        {
+            mon_ability[i] = 0;
+        }
+        mon_mana = round;
+        mon_infect = round + stage;
+        mon_grade = (int)(hpfactor / 40);
+
+        goal = GameObject.Find("Oak_Tree").transform.position;
+    }
+
     public bool Damaged(int dmg)
     {
         mon_hpNow -= dmg;
         if (mon_hpNow <= 0)
         {
+            NavMeshAgent agent = GetComponent<NavMeshAgent>();
+            agent.Stop();
+            died = true;
             return true;
         }
         return false;
