@@ -24,28 +24,29 @@ public class NetworkController : MonoBehaviour
     public const byte SC_SKILLSET = 15;
     public const byte SC_SCENECHANGE = 16;
 
+    public const byte PP_CONNECT = 20;
+    public const byte SP_DISCONNECT = 21;
+    public const byte SP_RECONNECT = 22;
+    public const byte SP_MONSTERSETINFO = 23; // 라운드 시작시
+    public const byte SP_MONSTERINFO = 24; // 게임 도중
+    public const byte SP_PLAYERINFO = 25; // 이동
+    public const byte SP_LOBYSTATE = 26;
+    public const byte SP_INGAMESTATE = 27; // 라운드 
+    public const byte SP_SCENEMOVE = 28;
+    public const byte SP_ENDGAME = 29;
+    public const byte SP_WINGAME = 30;
+    public const byte PP_SKILLSET = 31;
+
+    public const byte CS_REQCHR = 32;
+    public const byte SC_SELECT = 33;
+    public const byte CS_SKILL = 34;
+
+    public const byte S_NULL = 125;
+
     void Start()
     {
         DontDestroyOnLoad(gameObject);
     }
-
-    /*public byte[] ToByteTest(char obj)
-    {
-        try
-        {
-            using (MemoryStream stream = new MemoryStream())
-            {
-                BinaryFormatter binaryFormatter = new BinaryFormatter();
-                binaryFormatter.Serialize(stream, obj);
-                return stream.ToArray();
-            }
-        }
-        catch (Exception exception)
-        {
-            Debug.Log(exception.ToString());
-        }
-        return null;
-    }*/
 
     public byte[] ObjToByte(object obj)
     {
@@ -86,7 +87,7 @@ public class NetworkController : MonoBehaviour
     public bool net_send_signal(byte type, Socket s)
     {
         byte[] send_signal = new byte[1] { type };
-        Debug.Log(type);
+        //Debug.Log(type);
         s.Send(send_signal);
         return true;
     }
@@ -94,6 +95,7 @@ public class NetworkController : MonoBehaviour
     public bool net_send(object data, Socket s,byte type)
     {
         byte[] send_data = ObjToByte(data);
+        //Debug.Log("Type : " + type + " Length: " + send_data.Length);
         switch (type) {
             case CS_CONNECT:
                 if (send_data.Length != 116) {
@@ -150,12 +152,25 @@ public class NetworkController : MonoBehaviour
                     return false;
                 }
                 break;
+            case CS_SKILL:
+                if (send_data.Length != 104) {
+                    Debug.Log("net_send 오류 byte array의 길이가 표준치와 다릅니다. 패킷의 길이를 확인하세요.원래 98 현재 패킷 길이 " + send_data.Length);
+                    return false;
+                }
+                break;
             default:
                 return false;
         }
         if (send_data == null) return false;
-        s.Send(send_data);
-        Debug.Log("type : "+type+" send complete");
+        try
+        {
+            s.Send(send_data);
+        }
+        catch {
+            Debug.Log("Send Fail");
+        }
+        
+       // Debug.Log("type : "+type+" send complete\n"+s.RemoteEndPoint.ToString());
         return true;
     }
 
@@ -251,7 +266,8 @@ public struct SC_CHARACTERINFOSET_PACKET
 }
 
 [Serializable]
-public struct SC_SKILLSET_PACKET
+public struct CS_SKILLSET_PACKET
 {
-    public char[] sk_id;
+    public byte[] sk_id;
+    public byte id;
 }

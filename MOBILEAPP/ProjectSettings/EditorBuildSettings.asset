@@ -11,3 +11,9 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scene/Connected.unity
     guid: 46be18700e9a12a49abdaff69cab8ce9
+  - enabled: 1
+    path: Assets/Scene/SelectSkill.unity
+    guid: fd29a627958a38e478a1adafd466ab2c
+  - enabled: 1
+    path: Assets/Scene/Status.unity
+    guid: dd52c170850422d41a0e57af63e96f8f

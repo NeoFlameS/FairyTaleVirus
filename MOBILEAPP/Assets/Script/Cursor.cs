@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using UnityEngine;
 using System;
@@ -13,7 +14,7 @@ public class Cursor : MonoBehaviour
     public Text Error;
     public Text time;
     public Text World;
-
+    
     //이미지 설정
     public Image pad_img;
 
@@ -25,6 +26,7 @@ public class Cursor : MonoBehaviour
     Camera c;
 
     //UI 처리 변수
+    //public Button stat;//stat 탭 버튼
     GameObject cur;//본 오브젝트
     Vector3 startpos;//커서 시작점
     Vector3 startpos_screen;//시작점 스크린 좌표
@@ -50,12 +52,15 @@ public class Cursor : MonoBehaviour
         v = new Vector3();//패드 계산용
 
         //네트워크 통신용 변수 초기화
+        
         nm = GameObject.Find("NetWorkManager").GetComponent<NetWorkManager>();//네트워크 매니저 오브젝트에 접근 클래스 불러오기
+        
         frame = DateTime.Now;
 
         string img_path = "Img/ControllUI/pad_"+nm.My_Info.color;
-        Debug.Log("Pad Color path : "+img_path);
+        //Debug.Log("Pad Color path : "+img_path);
         pad_img.sprite = Resources.Load<Sprite>(img_path) as Sprite;
+        DontDestroyOnLoad(gameObject);
     }
 
     // Update is called once per frame
@@ -140,20 +145,18 @@ public class Cursor : MonoBehaviour
     void PadUp()
     {
         cur.transform.position = startpos;
-        if (DateTime.Now.Millisecond - frame.Millisecond >= 33 || DateTime.Now.Millisecond - frame.Millisecond < -33)
-        {
 
-            frame = DateTime.Now;
-            CS_MOVE_PACKET mov;
-            mov.id = nm.My_Info.id;
+        frame = DateTime.Now;
+        CS_MOVE_PACKET mov;
+        mov.id = nm.My_Info.id;
 
 
-            mov.x = 0;
-            mov.y = 0;
+        mov.x = 0;
+        mov.y = 0;
 
 
-            nm.GameDataSend(mov, NetworkController.CS_MOVE);
-        }
+        nm.GameDataSend(mov, NetworkController.CS_MOVE);
+
     }
 
     public void Btn0Touch()
@@ -162,9 +165,9 @@ public class Cursor : MonoBehaviour
             frame = DateTime.Now;
             CS_BUTTON_PACKET bt;
             bt.id = nm.My_Info.id;
-            bt.btn_number = '0';
+            bt.btn_number = (char)0;
 
-            nm.GameDataSend(bt, NetworkController.CS_MOVE);
+            nm.GameDataSend(bt, NetworkController.CS_BTN);
         }
 
         return;
@@ -177,9 +180,9 @@ public class Cursor : MonoBehaviour
             frame = DateTime.Now;
             CS_BUTTON_PACKET bt;
             bt.id = nm.My_Info.id;
-            bt.btn_number = '1';
+            bt.btn_number = (char)1;
 
-            nm.GameDataSend(bt, NetworkController.CS_MOVE);
+            nm.GameDataSend(bt, NetworkController.CS_BTN);
         }
         return;
     }
@@ -191,9 +194,9 @@ public class Cursor : MonoBehaviour
             frame = DateTime.Now;
             CS_BUTTON_PACKET bt;
             bt.id = nm.My_Info.id;
-            bt.btn_number = '2';
+            bt.btn_number = (char)2;
 
-            nm.GameDataSend(bt, NetworkController.CS_MOVE);
+            nm.GameDataSend(bt, NetworkController.CS_BTN);
         }
         return;
     }
@@ -205,11 +208,14 @@ public class Cursor : MonoBehaviour
             frame = DateTime.Now;
             CS_BUTTON_PACKET bt;
             bt.id = nm.My_Info.id;
-            bt.btn_number = '3';
+            bt.btn_number = (char)3;
 
-            nm.GameDataSend(bt, NetworkController.CS_MOVE);
+            nm.GameDataSend(bt, NetworkController.CS_BTN);
         }
         return;
     }
 
+    public void BtnStat() {
+        SceneManager.LoadScene("Status");
+    }
 }

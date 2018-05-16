@@ -8,6 +8,9 @@ public class MainSceneManager : MonoBehaviour {
     public GameObject CharacterInfoSet;
     Character[] ch;
 
+    public GameObject OPTIONPOPUP;
+    public GameObject BUTTON;
+
     public void Start()
     {
         CursorControl CC = GameObject.Find("Cursor Manager(Clone)").GetComponent<CursorControl>();
@@ -38,5 +41,11 @@ public class MainSceneManager : MonoBehaviour {
 
             PI[i].show();
         }
+    }
+
+    public void Update()
+    {
+        //if (OPTIONPOPUP.active.Equals(false)) OPTIONPOPUP.active = true;
+        //if (BUTTON.active.Equals(true)) BUTTON.active = false;
     }
 }

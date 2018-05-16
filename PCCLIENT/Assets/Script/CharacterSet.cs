@@ -1,7 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-
+using System;
 public class CharacterSet : MonoBehaviour {
 
     public Character[] Ch = new Character[4];
@@ -19,6 +19,13 @@ public class CharacterSet : MonoBehaviour {
             Ch[i] = c[i];
         }
     }
+    //5.16 홍승준 추가
+    public void Select_skillset(int id, CS_SKILLSET_PACKET CS) {
+        int i=0;
+        for (i = 0; i < 4; i++) {
+            Ch[id].skill[i] = Convert.ToInt16(CS.sk_id[i]);
+        }
+    }//5.16 여기까지
 }
 
 public struct Character{

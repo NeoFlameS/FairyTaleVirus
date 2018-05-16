@@ -11,18 +11,15 @@ using System.Threading;
 
 //PC연결도 5번째 소켓으로 같이 수행
 public class MobileNetwork : MonoBehaviour {
-
-    public static ManualResetEvent allDone = new ManualResetEvent(false);
-
 	NetworkController NC;
 	CursorControl CC;
     Socket sck;
+    Socket[] s_arr;//5.15 홍승준 추가
     List<IAsyncClient> clients = new List<IAsyncClient>();
     MainGameSystem GS;
 
-
     List<Socket> client_sock = new List<Socket>();
-    volatile bool[] connected = new bool[4] {true, true, true, true };
+    volatile bool[] connected;
 
     bool isgamescene = false;
 
@@ -32,31 +29,38 @@ public class MobileNetwork : MonoBehaviour {
         isgamescene = true;
         GS = GameObject.Find("GAME SYSTEM").GetComponent<MainGameSystem>();
     }
-
-        byte[][] recvbuf = new byte[4][];
+    
     // Use this for initialization
-    void Start()
+    void Start ()
     {
+        s_arr = new Socket[4];
+        connected = new bool[4] { false, false, false, false };
         NC = this.GetComponent<NetworkController>();
-        DontDestroyOnLoad(gameObject);
+        DontDestroyOnLoad (gameObject);
         if (null == CC) CC = GameObject.Find("Cursor Manager(Clone)").GetComponent<CursorControl>();
-
-        sck = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-        sck.Bind(new IPEndPoint(IPAddress.Any, 8080));
+        
+        sck = new Socket (AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+		sck.Bind (new IPEndPoint(IPAddress.Any ,8080));
         sck.Listen(100);
+
+        client_sock.Clear();
 
         sck.BeginAccept(new AsyncCallback(AcceptCallback), sck);
     }
 
-    void AcceptCallback(IAsyncResult ar)
-    {
-       
-        
+    public void AcceptCallback(IAsyncResult ar)
+    {        
         Socket listener = (Socket)ar.AsyncState;
         Socket handler = listener.EndAccept(ar);
         // 받는 방식의 변화 재접속...
-        int id = client_sock.Count;
-        if (id > NetworkController.MAX_CONNECT)
+        int id = 0;
+        for (int i = 0; i < 4; ++i) {
+            if (false == connected[i]) {
+                id = i;
+                break;
+            } 
+        }
+        if (client_sock.Count >= NetworkController.MAX_CONNECT)
         {
             handler.Disconnect(false);
         }
@@ -67,7 +71,6 @@ public class MobileNetwork : MonoBehaviour {
 
         NC.net_send_signal(NetworkController.SC_CONNECT, handler);
         SC_CONNECT_PACKET packet = new SC_CONNECT_PACKET();
-        Debug.Log((int)(char)id);
         packet.id = (char)id;
         switch (id)
         {
@@ -87,8 +90,10 @@ public class MobileNetwork : MonoBehaviour {
                 //error
                 break;
         }
+        Debug.Log("Player Color : "+packet.color);
         NC.net_send(packet, handler, NetworkController.SC_CONNECT);
-        connected[id] = false;
+        
+        connected[id] = true;
 
         IAsyncClient iaclient = new IAsyncClient();
         iaclient.s = handler;
@@ -97,100 +102,155 @@ public class MobileNetwork : MonoBehaviour {
         clients.Add(iaclient);
         handler.BeginReceive(iaclient.recvbuf, 0, NetworkController.MAXBUFFERSIZE, 0, new AsyncCallback(DataReceive), iaclient);
         sck.BeginAccept(new AsyncCallback(AcceptCallback), listener);
+
+        
+        s_arr[id] = handler;//5.15 홍승준 추가
     }
-    
+
+    //5.15 홍승준 추가
+    public void SignalSend(int id, byte type) {
+        NC.net_send_signal(type,s_arr[id]);
+    }
+    //5.15 끝
+
     //받은 데이터 체크 꼭 할것!!!!
-    void DataReceive(IAsyncResult ar)
+    public void DataReceive(IAsyncResult ar)
     {
         IAsyncClient obj = (IAsyncClient)ar.AsyncState;
         Socket handler = obj.s;
 
         int bytesRead = handler.EndReceive(ar);
         obj.recvbyte += bytesRead;
-        Debug.Log("DataReceived");
+
         //길이 맞는지 확인해보고
         if (obj.recvbyte > 0 || bytesRead > 0)
         {
+            Debug.Log("DataRecived");
             if (true == obj.signalread)
             {
-                obj.recv_signal = Convert.ToChar(obj.recvbuf[0]);
+                //5.14 홍승준 수정
+                obj.recv_signal = obj.recvbuf[0];
                 Buffer.BlockCopy(obj.recvbuf, 1, obj.recvbuf, 0, obj.recvbyte - 1);
-                obj.recvbyte -= 1;
-                obj.signalread = false;
-            }
 
+                switch (obj.recv_signal)
+                {
+                    case NetworkController.CS_REQCHR:
+                        //캐릭터 정보 요청 신호 일 때
+                        Debug.Log("Requset signal");
+                        SC_CHARACTERINFOSET_PACKET chset = new SC_CHARACTERINFOSET_PACKET();
+                        chset.characterinfo = new SC_CHARACTERINFO_PACKET[4];
+
+                        int i = 0;
+                        for (i = 0; i < 4; i++) {
+                            if (connected[i])
+                            {
+                                chset.characterinfo[i] = GS.PC[i].CharacterInfo();
+                                chset.characterinfo[i].id = (byte)i;
+                            }
+                            else {
+                                chset.characterinfo[i].id = 125;
+                            }
+                        }
+
+                        NC.net_send_signal(NetworkController.SC_CHARACTERINFOSET, obj.s);
+                        NC.net_send(chset,obj.s, NetworkController.SC_CHARACTERINFOSET);
+                        
+                        Debug.Log("Ch_info_set_packet : "+NC.ObjToByte(chset).Length);
+                        //다시 시그널 리시브 하도록 초기화
+                        obj.recvbyte -= 1;
+                        obj.signalread = true;
+
+                        break;
+                    default:
+                        obj.recvbyte -= 1;
+                        obj.signalread = false;
+                        break;
+                }
+            }
+            //5.14 홍승준 수정 끝
             if (false == obj.signalread)
-            if (obj.recv_signal == NetworkController.CS_DISCONNECT)
             {
-                client_sock.Remove(obj.s);
-                obj.s.Disconnect(false);
-              
-                if (false == isgamescene) CC.disconnected(obj.id);
-                else GS.disconnected(obj.id);
-                return;
-            }
-
-            else if (obj.recv_signal == NetworkController.CS_CONNECT && obj.recvbyte >= 116)
-            {
-                object recvobj = NC.ByteToObj(obj.recvbuf);
-                Buffer.BlockCopy(obj.recvbuf, 116, obj.recvbuf, 0, obj.recvbyte - 116);
-                obj.recvbyte -= 116;
-                    if (obj == null)
+                if (obj.recv_signal == NetworkController.CS_DISCONNECT)
                 {
-                    obj.s.BeginReceive(obj.recvbuf, 0, NetworkController.MAXBUFFERSIZE, 0, DataReceive, obj);
+                    client_sock.Remove(obj.s);
+                    obj.s.Disconnect(false);
+
+                    if (false == isgamescene) CC.disconnected(obj.id);
+                    else GS.disconnected(obj.id);
                     return;
                 }
-                CS_CONNECT_PACKET res = (CS_CONNECT_PACKET)recvobj;
 
-                CC.nickname[res.id] = res.nickname;
-                    Debug.Log(res.nickname);
-            }
-
-            else if (obj.recv_signal == NetworkController.CS_MOVE && obj.recvbyte >= 89)
-            {
-                object recvobj = NC.ByteToObj(obj.recvbuf);
-                Buffer.BlockCopy(obj.recvbuf, 89, obj.recvbuf, 0, obj.recvbyte - 89);
-                obj.recvbyte -= 89;
-                if (obj == null)
+                else if (obj.recv_signal == NetworkController.CS_CONNECT && obj.recvbyte >= 116)
                 {
-                    obj.s.BeginReceive(obj.recvbuf, 0, NetworkController.MAXBUFFERSIZE, 0, DataReceive, obj);
-                    return;
+                    Buffer.BlockCopy(obj.recvbuf, 0, obj.cbuf, 0, 116);
+                    object recvobj = NC.ByteToObj(obj.cbuf);
+                    Buffer.BlockCopy(obj.recvbuf, 116, obj.recvbuf, 0, obj.recvbyte - 116);
+                    obj.recvbyte -= 116;
+                    CS_CONNECT_PACKET res = (CS_CONNECT_PACKET)recvobj;
+
+                    CC.nickname[res.id] = res.nickname;
+                    obj.recv_signal = NetworkController.S_NULL;
+                    obj.signalread = true;
                 }
-                CS_MOVE_PACKET res = (CS_MOVE_PACKET)recvobj;
 
-                if (false == isgamescene) CC.move(res.x, res.y, res.id);
-                else GS.move(res.x, res.y, res.id);
-
-                    Debug.Log(res.x + res.y + res.id);
-
-            }
-            else if (obj.recv_signal == NetworkController.CS_BTN && obj.recvbyte >= 89)
-            {
-                object recvobj = NC.ByteToObj(obj.recvbuf);
-                Buffer.BlockCopy(obj.recvbuf, 89, obj.recvbuf, 0, obj.recvbyte - 89);
-                obj.recvbyte -= 89;
-                if (obj == null)
+                else if (obj.recv_signal == NetworkController.CS_MOVE && obj.recvbyte >= 89)
                 {
-                    obj.s.BeginReceive(obj.recvbuf, 0, NetworkController.MAXBUFFERSIZE, 0, DataReceive, obj);
-                    return;
-                }
-                CS_BUTTON_PACKET res = (CS_BUTTON_PACKET)recvobj;
+                    Buffer.BlockCopy(obj.recvbuf, 0, obj.cbuf, 0, 89);
+                    object recvobj = NC.ByteToObj(obj.cbuf);
+                    Buffer.BlockCopy(obj.recvbuf, 89, obj.recvbuf, 0, obj.recvbyte - 89);
+                    obj.recvbyte -= 89;
+                    CS_MOVE_PACKET res = (CS_MOVE_PACKET)recvobj;
 
-                if (false == isgamescene) CC.click(res.id, res.btn_number);
-                else GS.click(res.id, res.btn_number);
-            }
-            else {
-                handler.BeginReceive(obj.recvbuf, obj.recvbyte, NetworkController.MAXBUFFERSIZE - obj.recvbyte, 0, new AsyncCallback(DataReceive), obj);
+                    if (false == isgamescene) CC.move(res.x, res.y, res.id);
+                    else GS.move(res.x, res.y, res.id);
+                    obj.recv_signal = NetworkController.S_NULL;
+                    obj.signalread = true;
+
+                }
+                else if (obj.recv_signal == NetworkController.CS_BTN && obj.recvbyte >= 89)
+                {
+                    Buffer.BlockCopy(obj.recvbuf, 0, obj.cbuf, 0, 89);
+                    object recvobj = NC.ByteToObj(obj.cbuf);
+                    Buffer.BlockCopy(obj.recvbuf, 89, obj.recvbuf, 0, obj.recvbyte - 89);
+                    obj.recvbyte -= 89;
+                    CS_BUTTON_PACKET res = (CS_BUTTON_PACKET)recvobj;
+
+                    if (false == isgamescene) CC.click(res.id, res.btn_number);
+                    else GS.click(res.id, res.btn_number);
+                    obj.recv_signal = NetworkController.S_NULL;
+                    obj.signalread = true;
+                }//5.15 홍승준 추가
+                else if (obj.recv_signal == NetworkController.CS_SKILL && obj.recvbyte >= 104) {
+                    Buffer.BlockCopy(obj.recvbuf, 0, obj.cbuf, 0,104);
+                    object recvobj = NC.ByteToObj(obj.cbuf);
+                    Buffer.BlockCopy(obj.recvbuf, 104, obj.recvbuf, 0, obj.recvbyte -104);
+                    obj.recvbyte -= 104;
+
+                    CS_SKILLSET_PACKET sc = (CS_SKILLSET_PACKET) recvobj;
+                    CharacterSet ch =GameObject.Find("Selected Character Status").GetComponent<CharacterSet>();
+                    ch.Select_skillset(Convert.ToInt16(sc.sk_id),sc);
+
+                    Debug.Log("id : "+ Convert.ToString(sc.sk_id));
+                    Debug.Log(" 1 : "+(short)sc.sk_id[0]);
+                    Debug.Log(" 2 : " + (short)sc.sk_id[1]);
+                    Debug.Log(" 3 : " + (short)sc.sk_id[2]);
+                    Debug.Log(" 4 : " + (short)sc.sk_id[3]);
+                }//여기까지
             }
         }
+
+            
+        handler.BeginReceive(obj.recvbuf, obj.recvbyte, NetworkController.MAXBUFFERSIZE - obj.recvbyte, 0, new AsyncCallback(DataReceive), obj);
     }
 }
+
 
 public class IAsyncClient {
     public Socket s = null;
     public byte[] recvbuf = new byte[NetworkController.MAXBUFFERSIZE];
+    public byte[] cbuf = new byte[NetworkController.MAXBUFFERSIZE];
     public int recvbyte;
-    public char recv_signal;
+    public byte recv_signal;
     public string nickname;
     public bool signalread = true;
     public int id;

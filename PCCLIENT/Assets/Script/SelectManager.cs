@@ -20,7 +20,7 @@ public class SelectManager : MonoBehaviour {
         DontDestroyOnLoad(this);
         savedata = new SAVEDATA();
         savedata.CharacterData = new CHARACTERDATA[9];
-
+        
         for (int i = 0; i < 9; ++i)
         {
             string filename = "SLOT1 (" + i + ")";

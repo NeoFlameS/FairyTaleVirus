@@ -23,6 +23,8 @@ public class NetworkController : MonoBehaviour
 	public const byte SC_SKILLSET = 15;
 	public const byte SC_SCENECHANGE = 16;
 
+    public const byte S_NULL = 125;
+    
     public const byte PP_CONNECT = 20;
     public const byte SP_DISCONNECT = 21;
     public const byte SP_RECONNECT = 22;
@@ -36,10 +38,13 @@ public class NetworkController : MonoBehaviour
     public const byte SP_WINGAME = 30;
     public const byte PP_SKILLSET = 31;
 
+    public const byte CS_REQCHR = 32;
+    public const byte SC_SELECT = 33;
+    public const byte CS_SKILL = 34;
     //라운드 정보 = 캐릭터 이동명령(포인터 위치) + 몬스터 위치 + 오염도 수치 + 공유자원 따로 보냄
     //char -> byte 변경
 
-        
+
 
     void Start(){
 		DontDestroyOnLoad (gameObject);
@@ -244,8 +249,9 @@ public struct SC_CHARACTERINFOSET_PACKET{
 }
 
 [Serializable]
-public 	struct SC_SKILLSET_PACKET {
+public 	struct CS_SKILLSET_PACKET {
 	public byte[] sk_id;
+    public byte id;
 }
 
 [Serializable]

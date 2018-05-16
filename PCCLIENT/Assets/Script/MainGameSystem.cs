@@ -13,6 +13,8 @@ public class MainGameSystem : MonoBehaviour {
     public CharacterSet u_CS;
     public PlayerCharacter[] PC = new PlayerCharacter[4];
 
+    public GameObject[] CharacterSet = new GameObject[1];
+
     public GameObject[] Cursor = new GameObject[4];
     public Vector2[] cursormovevector = new Vector2[4];
     public bool[] iscconnected = { false, false, false, false };
@@ -21,7 +23,9 @@ public class MainGameSystem : MonoBehaviour {
     public const float REGENTIME = 1;
     public const float RESTTIME = 5000;
 
-    StageInfo[] stageinfoset = new StageInfo[MAXSTAGECOUNT];
+    public bool[] moveorder;
+
+    StageInfo[] stageinfoset;
     StageInfo stageinfo = new StageInfo();
     byte Round;
     byte Stage;
@@ -39,33 +43,44 @@ public class MainGameSystem : MonoBehaviour {
     public List<Monster> M;
 
 
+
     // Use this for initialization
     void Start () {
         //캐릭터 생성~
         //커서 생성~
+
+        //스테이지 불러오기~
+        Stage = 1;
         started = false;
         monsterpref = Resources.Load<GameObject>("3D/Monster") as GameObject;
 
         Character[] l_ch = new Character[4];
+        moveorder = new bool[4] { false, false, false, false };
 
         GameObject tmp;
         tmp = GameObject.Find("Selected Character Status(Clone)");
         if(null != tmp) u_CS = tmp.GetComponent<CharacterSet>();
 
         l_ch = u_CS.Ch;
-
+        
         for (int i = 0; i < 4; ++i) {
-            ui_PI[i] = GameObject.Find("PLAYERICON" + i).GetComponent<PlayerIcon>();
+            //ui_PI[i] = GameObject.Find("PLAYERICON" + i).GetComponent<PlayerIcon>();
 
             ui_PI[i].init();
 
             if (125 == l_ch[i].ch_type) continue;
             ui_PI[i].connected = true;
+            iscconnected[i] = true;
             ui_PI[i].ch_type = l_ch[i].ch_type;
             ui_PI[i].nickname = u_CS.nickname[i];
             ui_PI[i].level = l_ch[i].clearedround;
 
             ui_PI[i].show();
+
+            Cursor[i].active = true;
+
+            
+            PC[i] = Instantiate(CharacterSet[l_ch[i].ch_type], new Vector3(0, 0, 0), Quaternion.identity).GetComponent<PlayerCharacter>();
         }
 
         ui_infected.init();
@@ -75,12 +90,14 @@ public class MainGameSystem : MonoBehaviour {
         try
         {
             XmlDocument doc = new XmlDocument();
-            doc.Load("../Data/StageData.xml");
+            doc.Load(Application.persistentDataPath + "/SavedData.xml");
             XmlElement root = doc.DocumentElement;
 
             XmlNodeList nodes = root.ChildNodes;
 
             int count = 0;
+
+            stageinfoset = new StageInfo[1];            
 
             foreach (XmlNode node in nodes)
             {
@@ -90,8 +107,9 @@ public class MainGameSystem : MonoBehaviour {
                 stageinfoset[count].monsterperwave = new byte[stageinfoset[count].round];
                 for (int i = 0; i < stageinfoset[count].round; ++i)
                 {
-                    stageinfoset[count].monsterperwave[i] = byte.Parse(node[i.ToString()].InnerText);
+                    stageinfoset[count].monsterperwave[i] = byte.Parse(node["r" + (i+1).ToString()].InnerText);
                 }
+                count++;
             }
 
             stageinfo = stageinfoset[Stage - 1];
@@ -105,6 +123,8 @@ public class MainGameSystem : MonoBehaviour {
         }
 
         time = u_timer + RESTTIME;
+
+        PC[0].init();
     }
 	
     public void reconnected(int id)
@@ -119,8 +139,8 @@ public class MainGameSystem : MonoBehaviour {
 
     public void move(float x, float y, int id) {
         //cursor move
-        cursormovevector[id] = new Vector2(x, y);
-        if(x == 0 && y == 0) PC[id].move(Cursor[id].transform.position);
+        cursormovevector[id] = new Vector2(x * 20, y*20);
+        if (x == 0 && y == 0) moveorder[id] = true;
     }
 
     public void click(int id, int btnnumber) {
@@ -140,7 +160,6 @@ public class MainGameSystem : MonoBehaviour {
         l_temp.GetComponent<Monster>().Move();
     }
 
-
     //monster arrived endpoint
     private void OnTriggerEnter(Collider other)
     {
@@ -150,8 +169,7 @@ public class MainGameSystem : MonoBehaviour {
         if (true == gameover) SceneManager.LoadScene("Result");
         //gameover scene
     }
-
-
+    
     //스테이지
     public void Update()
     {
@@ -217,30 +235,28 @@ public class MainGameSystem : MonoBehaviour {
                     Mathf.Clamp(Cursor[i].transform.position.x + (cursormovevector[i].x * Time.deltaTime), PC[i].transform.position.x - 50, PC[i].transform.position.x + 50),
                     7351,
                    Mathf.Clamp(Cursor[i].transform.position.z + (cursormovevector[i].y * Time.deltaTime), PC[i].transform.position.z - 50, PC[i].transform.position.z + 50));
+                if (moveorder[i])
+                {
+                    moveorder[i] = false;
+                    PC[i].move(Cursor[i].transform.position);
+                }
             }
         }
         
         //TESTTTTTTTTTTTTTTTTTTTTTTTTTTTT
         if (Input.GetMouseButton(0)) // TESET
         {
-            ui_infected.init();
-            ui_infected.show();
-            monsterwave = 20;
             monsterpref = Resources.Load<GameObject>("3D/Monster") as GameObject;
             started = true;
             time = u_timer + REGENTIME;
         }
         if (Input.GetMouseButton(1)) // TESET
         {
-            PC[0].init();
-            GameObject S = GameObject.Find("Monster");
-            Debug.Log("ORDER");
-            PC[0].move(Cursor[0].transform.position);
+            move(1, 1, 0);
         }
         if (Input.GetMouseButton(2)) // TESET
         {
-            PC[0].init();
-            Debug.Log(PC[0].ch.target);
+            move(0, 0, 0);
         }
 
     }
@@ -253,8 +269,21 @@ struct StageInfo
     public string stagename;
     [XmlAttribute("stagenumber")]
     public byte stagenumber;
+    public byte[] monsterperwave;
     [XmlAttribute("round")]
     public byte round;
-    [XmlAttribute("stagename")]
-    public byte[] monsterperwave;
+    [XmlAttribute("r1")]
+    public byte r1;
+    [XmlAttribute("r2")]
+    public byte r2;
+    [XmlAttribute("r3")]
+    public byte r3;
+    [XmlAttribute("r4")]
+    public byte r4;
+    [XmlAttribute("r5")]
+    public byte r5;
+    [XmlAttribute("r6")]
+    public byte r6;
+    [XmlAttribute("r7")]
+    public byte r7;
 }
