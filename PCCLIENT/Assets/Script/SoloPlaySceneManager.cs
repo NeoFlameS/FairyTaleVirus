@@ -57,6 +57,8 @@ public class SoloPlaySceneManager : MonoBehaviour {
         POPUP_Difficulty.active = true;
         POPUP_Skill.active = false;
     }
-    
 
+    public void changeDifficulty(char difficulty) {
+        //난이도변경~
+    }
 }

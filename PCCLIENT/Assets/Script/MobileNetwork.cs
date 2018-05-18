@@ -110,7 +110,6 @@ public class MobileNetwork : MonoBehaviour {
     public void SignalSend(int id, byte type) {
         NC.net_send_signal(type,s_arr[id]);
     }
-    //5.15 끝
 
     //받은 데이터 체크 꼭 할것!!!!
     public void DataReceive(IAsyncResult ar)

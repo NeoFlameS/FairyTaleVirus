@@ -20,6 +20,10 @@ public class Monster : MonoBehaviour {
 
     public int target_count = 0;
     public bool died = false;
+    int slowed_value = 0;
+
+    int move_debufstack = 0;
+    int move_bufstack = 0;
 
     public Vector3 goal;
 
@@ -50,13 +54,13 @@ public class Monster : MonoBehaviour {
         mon_infect = 0;
         mon_grade = 0;
 
-        goal = GameObject.Find("Oak_Tree").transform.position;
+        goal = GameObject.Find("End Point").transform.position;
     }
 
     public void init(byte round, byte stage, int usernumber, int type)
     {
         int hpfactor = (1 + (((round + stage - 1) * (round + stage - 1) / 4 + 1) / 10)) * 40;
-        mon_type = type;
+        mon_type = (byte)type;
         float randnum = (type+2)/2;
 
         double hpfactor2 = 1 + ((usernumber - 1) * 0.1);
@@ -87,6 +91,16 @@ public class Monster : MonoBehaviour {
             return true;
         }
         return false;
+    }
+
+    public void Slow(int value) {
+        mon_movespd -= value;
+        move_debufstack += value;
+    }
+
+    public void Faster(int value) {
+        mon_movespd += value;
+        move_bufstack += 1;
     }
 
     public void Move(){

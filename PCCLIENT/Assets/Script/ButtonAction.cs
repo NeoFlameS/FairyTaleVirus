@@ -69,7 +69,6 @@ public class ButtonAction : MonoBehaviour {
                 GameObject.Find("SoloPlay Scene Manager").GetComponent<SoloPlaySceneManager>().changeDifficulty(SceneorPopup[0]);
                 break;
             case 11:
-                GameObject.Find("SoloPlay Scene Manager").GetComponent<SoloPlaySceneManager>().LoadScene();
                 break;
             default:
                 break;

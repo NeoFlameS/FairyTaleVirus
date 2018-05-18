@@ -12,6 +12,7 @@ public class MainGameSystem : MonoBehaviour {
     public PlayerIcon[] ui_PI;
     public CharacterSet u_CS;
     public PlayerCharacter[] PC = new PlayerCharacter[4];
+    public SkillSystem SS;
 
     public GameObject[] CharacterSet = new GameObject[1];
 
@@ -67,7 +68,9 @@ public class MainGameSystem : MonoBehaviour {
         if(null != tmp) u_CS = tmp.GetComponent<CharacterSet>();
 
         l_ch = u_CS.Ch;
-        
+
+        int[][] skills = new int[4][];
+
         for (int i = 0; i < 4; ++i) {
             //ui_PI[i] = GameObject.Find("PLAYERICON" + i).GetComponent<PlayerIcon>();
 
@@ -86,10 +89,12 @@ public class MainGameSystem : MonoBehaviour {
             Cursor[i].active = true;
             PC[i] = Instantiate(CharacterSet[l_ch[i].ch_type], new Vector3(-32, 7355, -28), Quaternion.identity).GetComponent<PlayerCharacter>();
             PC[i].init(l_ch[i]);
+            skills[i] = l_ch[i].skill;
         }
 
         ui_infected.init();
         ui_infected.show();
+        SS.init(skills);
 
         //Stage data load
         try
@@ -153,6 +158,7 @@ public class MainGameSystem : MonoBehaviour {
         return;
     }
 
+    /*
     //CURSORCONTROLL
     public void TestMonster() {
         monsterpref = Resources.Load<GameObject>("3D/Monster") as GameObject;
@@ -163,7 +169,7 @@ public class MainGameSystem : MonoBehaviour {
         Quaternion.identity);
 
         l_temp.GetComponent<Monster>().Move();
-    }
+    }*/
 
     //monster arrived endpoint
     private void OnTriggerEnter(Collider other)
