@@ -40,7 +40,7 @@ public class NetworkController : MonoBehaviour
     public const byte CS_REQCHR = 32;
     public const byte SC_SELECT = 33;
     public const byte CS_SKILL = 34;
-
+    public const byte CS_UPGRADE = 35;
     public const byte S_NULL = 125;
 
     void Start()
@@ -158,6 +158,13 @@ public class NetworkController : MonoBehaviour
                     return false;
                 }
                 break;
+            case CS_UPGRADE:
+                if (send_data.Length != 85)
+                {
+                    Debug.Log("net_send 오류 byte array의 길이가 표준치와 다릅니다. 패킷의 길이를 확인하세요.원래 98 현재 패킷 길이 " + send_data.Length);
+                    return false;
+                }
+                break;
             default:
                 return false;
         }
@@ -248,10 +255,10 @@ public struct SC_CHARACTERINFO_PACKET
 {
     public char id;
     public char ch_type;
-    public char ch_atk;
-    public char ch_str;
-    public char ch_vit;
-    public char ch_int;
+    public char ch_atk;  //a
+    public char ch_str;  //s
+    public char ch_vit;  //v
+    public char ch_int;  //i
     public char ch_mid;
     public char ch_matk;
     public short ch_movespd;
@@ -270,4 +277,10 @@ public struct CS_SKILLSET_PACKET
 {
     public byte[] sk_id;
     public byte id;
+}
+
+[Serializable]
+public struct CS_UPGRADE_PACKET {
+    public byte id;
+    public byte up_sg;
 }

@@ -14,7 +14,11 @@ public class SelectManager : MonoBehaviour {
     public CharacterCard[] CC = new CharacterCard[MAX_CHARACTER_SAVE];
     SAVEDATA savedata;
     int charactercount;
-
+    //5.18일 수정사항 홍승준
+    bool[] select_player = new bool[4];
+    byte[] select_slot = new byte[4];
+    bool[] show_card = {false,false,false,false,false,false,false,false,false};
+    //
     public void Start()
     {
         DontDestroyOnLoad(this);
@@ -81,9 +85,23 @@ public class SelectManager : MonoBehaviour {
             }
         }
     }
-
-    public bool MakeCharacter(byte ch_type, byte id)
+    //5.18일 수정사항 홍승준
+    public void Before_Make(byte id,byte player_num) {
+        select_player[player_num] = true;
+        select_slot[player_num] = id;
+    }
+    public bool MakeCharacter(byte ch_type, byte player_num, object cs)
     {
+        CS_SKILLSET_PACKET sc = (CS_SKILLSET_PACKET)cs;
+        byte id=0;
+        if (select_player[player_num])
+        {
+            id = select_slot[player_num];
+        }
+        else {
+            return false;
+        }
+        
         //CHARACTER INIT OPTION SET=============================================
         savedata.CharacterData[id].id = id;
         savedata.CharacterData[id].clearedround = 0;
@@ -104,11 +122,20 @@ public class SelectManager : MonoBehaviour {
         CC[id].ch_type = ch_type;
         CC[id].clearedround = 0;
         CC[id].skillset = new int[4] { 0, 0, 0, 0 };
-        CC[id].show();
+        show_card[id] = true;
+        //CC[id].show();
+
+        
+        Debug.Log("id : " + Convert.ToString(sc.id));
+        Debug.Log(" 1 : " + (short)sc.sk_id[0]);
+        Debug.Log(" 2 : " + (short)sc.sk_id[1]);
+        Debug.Log(" 3 : " + (short)sc.sk_id[2]);
+        Debug.Log(" 4 : " + (short)sc.sk_id[3]);
+
 
         return true;
     }
-
+    //
     public Character[] LoadToScene(byte[] id, int count) {
 
         Debug.Log(id[0]);
@@ -258,6 +285,17 @@ public class SelectManager : MonoBehaviour {
 
         return true;
     }
+    //5.18 홍승준 추가
+    private void FixedUpdate()
+    {
+        int i = 0;
+        for (i = 0; i < 9; i++) {
+            if (show_card[i]) {
+                CC[i].show();
+            }
+        }
+    }
+    //
 }
 
 [Serializable]

@@ -83,12 +83,15 @@ public class NetWorkManager : MonoBehaviour {
         Debug.Log("SC_CHARACTERINFO_PACKET : " + NetFunc.ObjToByte(scip).Length);
         Debug.Log("SC_CHARACTERINFOSET_PACKET : "+NetFunc.ObjToByte(sccp).Length);
         Debug.Log("SC_SKILLSET_PACKET : " + NetFunc.ObjToByte(ssp).Length);
-         */
+         
 
         CS_SKILLSET_PACKET sc = new CS_SKILLSET_PACKET();
         sc.sk_id = new byte[4];
         Debug.Log("CS_SKILL_PACKET : " + NetFunc.ObjToByte(sc).Length);
         
+        CS_UPGRADE_PACKET up = new CS_UPGRADE_PACKET();  크기 85
+        Debug.Log("CS_UPGRADE_PACKET : " + NetFunc.ObjToByte(up).Length);*/
+
     }
 
     // Update is called once per frame

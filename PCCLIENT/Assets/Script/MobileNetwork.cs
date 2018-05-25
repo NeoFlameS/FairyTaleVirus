@@ -23,6 +23,10 @@ public class MobileNetwork : MonoBehaviour {
 
     bool isgamescene = false;
 
+    //5.19 홍승준 추가
+    SelectManager sm;
+    ManaSystem Ms;
+
     public void OnLevelWasLoaded()
     {
         if (7 != SceneManager.GetActiveScene().buildIndex) return;
@@ -92,6 +96,7 @@ public class MobileNetwork : MonoBehaviour {
         }
         Debug.Log("Player Color : "+packet.color);
         NC.net_send(packet, handler, NetworkController.SC_CONNECT);
+        
         connected[id] = true;
 
         IAsyncClient iaclient = new IAsyncClient();
@@ -110,6 +115,7 @@ public class MobileNetwork : MonoBehaviour {
     public void SignalSend(int id, byte type) {
         NC.net_send_signal(type,s_arr[id]);
     }
+    //5.15 끝
 
     //받은 데이터 체크 꼭 할것!!!!
     public void DataReceive(IAsyncResult ar)
@@ -203,8 +209,8 @@ public class MobileNetwork : MonoBehaviour {
                     else GS.move(res.x, res.y, res.id);
                     obj.recv_signal = NetworkController.S_NULL;
                     obj.signalread = true;
-                }
 
+                }
                 else if (obj.recv_signal == NetworkController.CS_BTN && obj.recvbyte >= 89)
                 {
                     Buffer.BlockCopy(obj.recvbuf, 0, obj.cbuf, 0, 89);
@@ -217,26 +223,48 @@ public class MobileNetwork : MonoBehaviour {
                     else GS.click(res.id, res.btn_number);
                     obj.recv_signal = NetworkController.S_NULL;
                     obj.signalread = true;
-                }//5.15 홍승준 추가
+                }//5.15 홍승준 추가//5.18 홍승준 수정
                 else if (obj.recv_signal == NetworkController.CS_SKILL && obj.recvbyte >= 104) {
-                    Buffer.BlockCopy(obj.recvbuf, 0, obj.cbuf, 0,104);
+                    Buffer.BlockCopy(obj.recvbuf, 0, obj.cbuf, 0, 104);
                     object recvobj = NC.ByteToObj(obj.cbuf);
-                    Buffer.BlockCopy(obj.recvbuf, 104, obj.recvbuf, 0, obj.recvbyte -104);
+                    Buffer.BlockCopy(obj.recvbuf, 104, obj.recvbuf, 0, obj.recvbyte - 104);
                     obj.recvbyte -= 104;
 
-                    CS_SKILLSET_PACKET sc = (CS_SKILLSET_PACKET) recvobj;
-                    CharacterSet ch =GameObject.Find("Selected Character Status").GetComponent<CharacterSet>();
-                    ch.Select_skillset(Convert.ToInt16(sc.sk_id),sc);
-
+                    CS_SKILLSET_PACKET sc = (CS_SKILLSET_PACKET)recvobj;
+                    sm.MakeCharacter(0, sc.id, sc);
+                    obj.recv_signal = NetworkController.S_NULL;
+                    obj.signalread = true;
+                    /*
                     Debug.Log("id : "+ Convert.ToString(sc.sk_id));
                     Debug.Log(" 1 : "+(short)sc.sk_id[0]);
                     Debug.Log(" 2 : " + (short)sc.sk_id[1]);
                     Debug.Log(" 3 : " + (short)sc.sk_id[2]);
-                    Debug.Log(" 4 : " + (short)sc.sk_id[3]);
+                    Debug.Log(" 4 : " + (short)sc.sk_id[3]);*/
                 }//여기까지
+                else if (obj.recv_signal == NetworkController.CS_UPGRADE && obj.recvbyte >= 85) {
+                    Debug.Log("UPGRADE RECEIVE");
+                    Buffer.BlockCopy(obj.recvbuf, 0, obj.cbuf, 0, 85);
+                    object recvobj = NC.ByteToObj(obj.cbuf);
+                    Buffer.BlockCopy(obj.recvbuf, 85, obj.recvbuf, 0, obj.recvbyte - 85);
+                    obj.recvbyte -= 85;
+
+                    Ms.Upgrade_reciev(recvobj);
+                    obj.recv_signal = NetworkController.S_NULL;
+                    obj.signalread = true;
+                }
             }
         }
+
+            
         handler.BeginReceive(obj.recvbuf, obj.recvbyte, NetworkController.MAXBUFFERSIZE - obj.recvbyte, 0, new AsyncCallback(DataReceive), obj);
+    }
+
+    public void Get_SelectManger() {
+        sm=GameObject.Find("Select Manager(Clone)").GetComponent<SelectManager>();
+    }
+
+    public void Get_ManaSystem() {
+        Ms = GameObject.Find("ManaSystem").GetComponent<ManaSystem>();
     }
 }
 

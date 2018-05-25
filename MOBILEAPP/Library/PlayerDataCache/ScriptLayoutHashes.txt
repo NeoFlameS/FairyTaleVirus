@@ -6,6 +6,7 @@ Assets/Scene/ConnectScene.unity
 Assets/Scene/Connected.unity
 Assets/Scene/SelectSkill.unity
 Assets/Scene/Status.unity
+Assets/Scene/Upgrade.unity
 SceneListEnd?
 05524b8f659e7bfe5756d1335fec24ba UnityEngine.Timeline.dll:UnityEngine.Timeline.ActivationPlayableAsset
 dbc29a6f2739d277c10da432d73adb6d UnityEngine.Timeline.dll:UnityEngine.Timeline.ActivationTrack
@@ -155,4 +156,5 @@ c2275a8bfbb9f9942cad75ecdfded41d UnityEngine.HoloLens.dll:UnityEngine.XR.WSA.Spa
 03f0f673f9e6b2a83549e8ee3f168545 Assembly-CSharp.dll:.NetWorkManager
 9de3a22eca9aefadba2d10d5987cefe3 UnityEngine.SpatialTracking.dll:UnityEngine.SpatialTracking.TrackedPoseDriver
 05524b8f659e7bfe5756d1335fec24ba Assembly-CSharp.dll:.NetworkController
+05524b8f659e7bfe5756d1335fec24ba Assembly-CSharp.dll:.UpgradeManager
 bb8ba3219285594eff3bd813ad040a40 Assembly-CSharp.dll:.StatusBox

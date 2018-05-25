@@ -22,7 +22,7 @@ public class NetworkController : MonoBehaviour
 	public const byte SC_CHARACTERINFOSET = 14;
 	public const byte SC_SKILLSET = 15;
 	public const byte SC_SCENECHANGE = 16;
-
+    public const byte CS_UPGRADE = 35;//5.20 홍승준 추가
     public const byte S_NULL = 125;
     
     public const byte PP_CONNECT = 20;
@@ -247,13 +247,20 @@ public 	struct SC_CHARACTERINFO_PACKET {
 public struct SC_CHARACTERINFOSET_PACKET{
 	public SC_CHARACTERINFO_PACKET[] characterinfo;
 }
-
+//5.20 홍승준 추가
 [Serializable]
 public 	struct CS_SKILLSET_PACKET {
 	public byte[] sk_id;
     public byte id;
 }
 
+[Serializable]
+public struct CS_UPGRADE_PACKET
+{
+    public byte id;
+    public byte up_sg;
+}
+//완료
 [Serializable]
 public struct PP_CONNECT_PACKET
 {

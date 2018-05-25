@@ -117,13 +117,14 @@ public class CursorControl : MonoBehaviour {
             switch (btnnumber[i])
             {
                 case 0:
-                    //5.15 홍승준 추가 -- 생성 씬
+                    //5.15 홍승준 추가 -- 생성 씬 5.18 홍승준 수정
                     GameObject.Find("Network Manager(Clone)").GetComponent<MobileNetwork>().SignalSend(i,NetworkController.SC_SELECT);
-
+                    GameObject.Find("Network Manager(Clone)").GetComponent<MobileNetwork>().Get_SelectManger();
                     //끝
 
-                    if (null == selectedbutton[i]) break;
-                    SM.MakeCharacter(0, selectedbutton[i].CCid);
+                    SM.Before_Make(selectedbutton[i].CCid, (byte)i);
+                    /*if (null == selectedbutton[i]) break;
+                    SM.MakeCharacter(0, selectedbutton[i].CCid);*/
                     break;
                 case 1:
                     if (null != selectedbutton[i])
