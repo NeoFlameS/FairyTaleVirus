@@ -10,10 +10,14 @@ public class PlayerCharacter : MonoBehaviour {
     float timer_atk;
     float[] timer_skillcool = new float[4];
     float atkspd;
+    int dmg;
+
+    List<BUFF> b;
 
     public NavMeshAgent nm;
 
     public GameObject TESTTMP;
+    public SkillSystem SS;
 
     public void init()
     {
@@ -43,6 +47,19 @@ public class PlayerCharacter : MonoBehaviour {
         ch.skill = new int[4];
         ch.point = transform.position;
         ch.skillnumber = 0;
+
+        atkspd = ch.ch_atkspd;
+        dmg = ch.ch_atk;
+        
+        nm = GetComponent<NavMeshAgent>();
+    }
+
+    public void init(PlayerCharacter c)
+    {
+        ch = c;
+
+        atkspd = ch.ch_atkspd;
+        dmg = ch.ch_atk;
 
         nm = GetComponent<NavMeshAgent>();
     }
@@ -74,7 +91,7 @@ public class PlayerCharacter : MonoBehaviour {
         //TESETTESTSETSETSETSETSET
         Instantiate(TESTTMP, ch.target.transform.position, TESTTMP.transform.rotation);
 
-        if (true == ch.target.Damaged(ch.ch_atk)) {
+        if (true == ch.target.Damaged(dmg)) {
             if (ch.target.target_count <= 1){
                 Destroy(ch.target.gameObject);
                 ch.target = null;
@@ -86,6 +103,32 @@ public class PlayerCharacter : MonoBehaviour {
                 ch.target = null;
             }
         }
+
+        for (int i = 0; i < b.Count;)
+        {
+            if (b[i].atk())
+            {
+
+                switch (b[i].type)
+                {
+                    case SkillSystem.BUF_ATK_UP:
+                        {
+                            dmg -= b[i].value;
+                            break;
+                        }
+                    case SkillSystem.BUF_ATKSPD_UP:
+                        {
+                            atkspd -= b[i].value;
+                            break;
+                        }
+                }
+
+                b.Remove(b[i]);
+                continue;
+            }
+            i += 1;
+        }
+
         ch.state = Character.IDLE;
     }
 
@@ -124,14 +167,38 @@ public class PlayerCharacter : MonoBehaviour {
         if (ch.state != Character.IDLE)
         {
             ch.nextorder = Character.SKILL;
+            ch.skillnumber = key;
             return;
         }
+
+        SS.use_skill(this, ch.target, ch.id, key);
         //스킬 사용~
         //skill[key];
         //모션
     }
 
-    public void LocalUpdate(List<Monster> mm, float timer)
+         public void UseBuff(byte type, int value, int duration)
+    {
+         BUFF bf = new BUFF();
+         bf.type = type;
+         bf.value = value;
+         bf.duration = duration;
+         
+                 switch (type)
+        {
+             case SkillSystem.BUF_ATK_UP: {
+             dmg += value;
+                                 break;
+                             }
+                     case SkillSystem.BUF_ATKSPD_UP: {
+             atkspd += value;
+                                 break;
+                             }
+                 }
+         
+     }
+
+public void LocalUpdate(List<Monster> mm, float timer)
     {
         //find
         if (ch.target == null) {
@@ -197,4 +264,17 @@ public class PlayerCharacter : MonoBehaviour {
         }
 
     }
+
+     struct BUFF
+    {
+     public bool atk()
+        {
+             duration -= 1;
+                     if (0 <= duration) return true;
+                     else return false;
+                 }
+     public byte type;
+     public int value;
+     public int duration;
+ }
 }

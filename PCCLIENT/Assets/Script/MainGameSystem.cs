@@ -12,6 +12,7 @@ public class MainGameSystem : MonoBehaviour {
     public PlayerIcon[] ui_PI;
     public CharacterSet u_CS;
     public PlayerCharacter[] PC = new PlayerCharacter[4];
+    public SkillSystem SS;
 
     public GameObject[] CharacterSet = new GameObject[1];
 
@@ -22,6 +23,7 @@ public class MainGameSystem : MonoBehaviour {
     public const int MAXSTAGECOUNT = 1;
     public const float REGENTIME = 1;
     public const float RESTTIME = 5000;
+    public const int MONSTERTYPECOUNT = 3;
 
     public bool[] moveorder;
 
@@ -33,11 +35,12 @@ public class MainGameSystem : MonoBehaviour {
     byte monsterwave;
     byte monstercount = 0;
     bool started = false;
+    byte usercount = 0;
 
     float u_timer;
     float time = RESTTIME;
 
-    public GameObject monsterpref;
+    public GameObject[] monsterpref = new GameObject[MONSTERTYPECOUNT];
     public GameObject[] monstergenpoint = new GameObject[3];
 
     public List<Monster> M;
@@ -52,7 +55,9 @@ public class MainGameSystem : MonoBehaviour {
         //스테이지 불러오기~
         Stage = 1;
         started = false;
-        monsterpref = Resources.Load<GameObject>("3D/Monster") as GameObject;
+        monsterpref[0] = Resources.Load<GameObject>("3D/Monster1R") as GameObject;
+        monsterpref[1] = Resources.Load<GameObject>("3D/Monster1Y") as GameObject;
+        monsterpref[2] = Resources.Load<GameObject>("3D/Monster1B") as GameObject;
 
         Character[] l_ch = new Character[4];
         moveorder = new bool[4] { false, false, false, false };
@@ -62,7 +67,9 @@ public class MainGameSystem : MonoBehaviour {
         if(null != tmp) u_CS = tmp.GetComponent<CharacterSet>();
 
         l_ch = u_CS.Ch;
-        
+
+        int[][] skills = new int[4][];
+
         for (int i = 0; i < 4; ++i) {
             //ui_PI[i] = GameObject.Find("PLAYERICON" + i).GetComponent<PlayerIcon>();
 
@@ -71,6 +78,7 @@ public class MainGameSystem : MonoBehaviour {
             if (125 == l_ch[i].ch_type) continue;
             ui_PI[i].connected = true;
             iscconnected[i] = true;
+            usercount += 1;
             ui_PI[i].ch_type = l_ch[i].ch_type;
             ui_PI[i].nickname = u_CS.nickname[i];
             ui_PI[i].level = l_ch[i].clearedround;
@@ -79,12 +87,15 @@ public class MainGameSystem : MonoBehaviour {
 
             Cursor[i].active = true;
 
-            
-            PC[i] = Instantiate(CharacterSet[l_ch[i].ch_type], new Vector3(0, 0, 0), Quaternion.identity).GetComponent<PlayerCharacter>();
+
+            PC[i] = Instantiate(CharacterSet[l_ch[i].ch_type], new Vector3(-32, 7355, -28), Quaternion.identity).GetComponent<PlayerCharacter>();
+            PC[i].init(l_ch[i]);
+            skills[i] = l_ch[i].skill;
         }
 
         ui_infected.init();
         ui_infected.show();
+        SS.init(skills);
 
         //Stage data load
         try
@@ -148,6 +159,7 @@ public class MainGameSystem : MonoBehaviour {
         return;
     }
 
+    /*
     //CURSORCONTROLL
     public void TestMonster() {
         monsterpref = Resources.Load<GameObject>("3D/Monster") as GameObject;
@@ -158,7 +170,7 @@ public class MainGameSystem : MonoBehaviour {
         Quaternion.identity);
 
         l_temp.GetComponent<Monster>().Move();
-    }
+    }*/
 
     //monster arrived endpoint
     private void OnTriggerEnter(Collider other)
@@ -186,33 +198,14 @@ public class MainGameSystem : MonoBehaviour {
         if (true == started && time <= u_timer && monstercount < monsterwave)
         {
             int j = UnityEngine.Random.Range(0, 3);
+            int mon_type = UnityEngine.Random.Range(0, MONSTERTYPECOUNT);
             GameObject l_temp = new GameObject();
             //TETSLETSETTESTESTESTESTESTESTESTESTESTESTESTESTESTESTESTESTESTES
-            if (monstercount == 2)
-                l_temp = Instantiate(monsterpref, monstergenpoint[0].transform.position, Quaternion.identity);
-            else if (monstercount == 18)
-                l_temp = Instantiate(monsterpref, monstergenpoint[2].transform.position, Quaternion.identity);
-            else
-                l_temp = Instantiate(monsterpref, monstergenpoint[j].transform.position, Quaternion.identity);
+            l_temp = Instantiate(monsterpref[mon_type], monstergenpoint[j].transform.position, Quaternion.identity);
 
             Monster mm = l_temp.GetComponent<Monster>();
-            mm.init();
-            if (monstercount == 2)
-            {
-                mm.mon_infect = 3;
-                mm.mon_hpMax = 1000000;
-                mm.mon_hpNow = 1000000;
-            }
-
-            else if (monstercount == 18)
-            {
-                mm.mon_infect = 3;
-                mm.mon_hpMax = 1000000;
-                mm.mon_hpNow = 1000000;
-            }
+            mm.init(Round, Stage, usercount, mon_type);
             mm.Move();
-           
-
             M.Add(mm);
 
             monstercount += 1;
@@ -246,7 +239,6 @@ public class MainGameSystem : MonoBehaviour {
         //TESTTTTTTTTTTTTTTTTTTTTTTTTTTTT
         if (Input.GetMouseButton(0)) // TESET
         {
-            monsterpref = Resources.Load<GameObject>("3D/Monster") as GameObject;
             started = true;
             time = u_timer + REGENTIME;
         }
