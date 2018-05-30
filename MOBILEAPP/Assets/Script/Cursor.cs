@@ -211,4 +211,8 @@ public class Cursor : MonoBehaviour
     public void BtnStat() {
         SceneManager.LoadScene("Status");
     }
+
+    public void BtnUpgrade() {
+        SceneManager.LoadScene("Upgrade");
+    }
 }

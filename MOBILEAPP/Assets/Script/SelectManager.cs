@@ -91,7 +91,7 @@ public class SelectManager : MonoBehaviour {
     {
         GameObject.Find("NetWorkManager").GetComponent<NetWorkManager>().GameDataSend(sc,NetworkController.CS_SKILL);
         Debug.Log((short)sc.sk_id[0]+ (short)sc.sk_id[1]+ (short)sc.sk_id[2]+ (short)sc.sk_id[3]);
-        SceneManager.LoadScene("ConnectedScene");
+        SceneManager.LoadScene("Connected");
     }
     public void Reselect_btn()
     {
