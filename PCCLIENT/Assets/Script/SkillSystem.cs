@@ -52,7 +52,7 @@ public class SkillSystem : MonoBehaviour {
                     sk[i][j].sk_cooltime = float.Parse(node["Cooltime"].InnerText);
                     sk[i][j].sk_canusetime = sk[i][j].sk_cooltime;
                     sk[i][j].sk_effecttime = float.Parse(node["EffectTime"].InnerText);
-                    sk[i][j].sk_effect = byte.Parse(node["Cooltime"].InnerText);
+                    sk[i][j].sk_effect = byte.Parse(node["Effect"].InnerText);
                     sk[i][j].sk_basedmg = byte.Parse(node["BaseDmg"].InnerText);
                     sk[i][j].sk_statusmultipledmg = float.Parse(node["StatusMultiplyDmg"].InnerText);
                     sk[i][j].sk_basedstatus = byte.Parse(node["StatusMultiply"].InnerText);

@@ -70,38 +70,32 @@ public class Cursor : MonoBehaviour
         //cur.transform.position.Set()
         if (Input.touchCount > 0)
         {
-
-            int i = 0;
             int count = Input.touchCount;
 
+            now = Input.touches;
+
             //터치 부터 처리
-            for (i = 0; i < count; i++)
+            for (int i = 0; i < count; ++i)
             {
-
                 now = Input.GetTouch(i);
-
-                /*now_pos.x = now.position.x;
-                now_pos.y = now.position.y;
-                PadTouch(now_pos);*/
-
                 
                 TOUCHPOINT.text = "X : " + now.position.x + " Y : " + now.position.y;
                 ScreenSize.text = Screen.width + " X " + Screen.height;
-
-                if ((now.phase == TouchPhase.Ended || now.phase == TouchPhase.Canceled) && pad_index == i)
+                
+                if (now.position.x < pad_boundx && now.position.y < pad_boundy)
                 {
-                    //패드를 터치했던 손을 땠을 때
-                    PadUp();
-                    continue;
-                }
-
-
-                if (now.position.x < (Screen.width / 2)-100 && now.position.y < 3 * Screen.height / 4)
-                {
-                    pad_index = i;
-                    //float x, y, z;
-                    Error.text = "Pad Touch";
-                    PadTouch(now.position.x, now.position.y, startpos.z);
+                    if ((now.phase == TouchPhase.Ended || now.phase == TouchPhase.Canceled))
+                    {
+                        //패드를 터치했던 손을 땠을 때
+                        PadUp();
+                        break;
+                    }
+                    else
+                    {
+                        //float x, y, z;
+                        Error.text = "Pad Touch";
+                        PadTouch(now.position.x, now.position.y, startpos.z);
+                    }
                 }
                 else {
                     Error.text = "Not Pad Touch";
@@ -110,7 +104,6 @@ public class Cursor : MonoBehaviour
         }
 
         time.text = frame.ToString();
-
         
     }
 
