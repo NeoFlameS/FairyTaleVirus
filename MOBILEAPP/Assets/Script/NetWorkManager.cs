@@ -14,6 +14,9 @@ using System.Xml;
 
 
 public class NetWorkManager : MonoBehaviour {
+
+    public Text skill_recv;
+
     //스킬 셀렉트 변수
     public byte My_type=126;
     //캐릭터 변수
@@ -24,7 +27,7 @@ public class NetWorkManager : MonoBehaviour {
     public InputField namefd;
     public Button OK;
     bool select_scene;//캐릭터 셀렉트
-    bool skill_select;//스킬 셀렉트
+    public bool skill_select;//스킬 셀렉트
     public bool in_game;
     //소켓 연결 정보
     int state;
@@ -45,13 +48,7 @@ public class NetWorkManager : MonoBehaviour {
     int byteRead;
 
     Cursor cursor;
-    //CMessageResolver PacketReader;
-    // Use this for initialization
-    /*
-    void set_charinfo(SC_CHARACTERINFO_PACKET sc)
-    {
-        scinf[] = sc;
-    }*/
+    
     void Start() {
         last = new OptionSet();
 
@@ -61,62 +58,17 @@ public class NetWorkManager : MonoBehaviour {
         ip = "Wrong IP";
         My_Info.id = 'e';
         My_Info.color = 'n';
-        //PacketReader = new CMessageResolver();
+        
         DontDestroyOnLoad(gameObject);
 
         select_scene = false;
         skill_select = false;
         in_game = false;
-
-        //Packet 크기 테스트용 지울것
-        /*
-        CS_CONNECT_PACKET csc;
-        csc.id = '1';
-        csc.nickname = "NeoFlamell";
-        csc.namelength = (byte)csc.nickname.Length;
-        SC_CONNECT_PACKET scc;
-        scc.id = '1';
-        scc.color = 'r';
-        CS_MOVE_PACKET csm;
-        csm.x = (float)1.1;
-        csm.y = (float)1.1;
-        csm.id = '1';
-        CS_BUTTON_PACKET csb;
-        csb.id = '1';
-        csb.btn_number = '3';
-
-        SC_SCENE_CHANGE_PACKET sscp = new SC_SCENE_CHANGE_PACKET();
-        MONSTERINFO mi = new MONSTERINFO();
-        SC_CHARACTERINFO_PACKET scip= new SC_CHARACTERINFO_PACKET();
-        SC_CHARACTERINFOSET_PACKET sccp;
-        SC_SKILLSET_PACKET ssp = new SC_SKILLSET_PACKET();
-        sccp.characterinfo = new SC_CHARACTERINFO_PACKET[4];
-
-        Debug.Log("CS_CONNET_PACKET SIZE : "+NetFunc.ObjToByte(csc).Length+" String "+csc.namelength);
-        Debug.Log("SC_CONNECT_PACKET : " + NetFunc.ObjToByte(scc).Length);
-        Debug.Log("CS_MOVE_PACKET : " + NetFunc.ObjToByte(csm).Length);
-        Debug.Log("CS_BUTTON_PACKET : " + NetFunc.ObjToByte(csb).Length);
-
-        Debug.Log("SC_SCENE_CHANGE_PACKET : " + NetFunc.ObjToByte(sscp).Length);
-        Debug.Log("MONSTERINFO : " + NetFunc.ObjToByte(mi).Length);
-        Debug.Log("SC_CHARACTERINFO_PACKET : " + NetFunc.ObjToByte(scip).Length);
-        Debug.Log("SC_CHARACTERINFOSET_PACKET : "+NetFunc.ObjToByte(sccp).Length);
-        Debug.Log("SC_SKILLSET_PACKET : " + NetFunc.ObjToByte(ssp).Length);
-         
-
-        CS_SKILLSET_PACKET sc = new CS_SKILLSET_PACKET();
-        sc.sk_id = new byte[4];
-        Debug.Log("CS_SKILL_PACKET : " + NetFunc.ObjToByte(sc).Length);
         
-        CS_UPGRADE_PACKET up = new CS_UPGRADE_PACKET();  크기 85
-        Debug.Log("CS_UPGRADE_PACKET : " + NetFunc.ObjToByte(up).Length);*/
+        SC_TYPE_PACKET stp = new SC_TYPE_PACKET();
+        stp.type = 1;
 
-        CS_CAMERA_PACKET cs = new CS_CAMERA_PACKET();
-        cs.type = 1;
-        cs.y = 1;
-        cs.x = 1;
-        
-        Debug.Log("CS_CAMERA_PACKET : " + NetFunc.ObjToByte(cs).Length);
+        Debug.Log("CS_CAMERA_PACKET : " + NetFunc.ObjToByte(stp).Length);
         Load_Data();
     }
 
@@ -137,10 +89,11 @@ public class NetWorkManager : MonoBehaviour {
             SceneManager.LoadScene("CharacterSelect");//캐릭터 셀렉트 씬 으로 변경할것
         }
 
-        if (skill_select) {
+        /*if (skill_select) {
+            
             skill_select = false;
             SceneManager.LoadScene("SelectSkill");
-        }
+        }*/
     }
 
     void SetNetwork() {
@@ -269,27 +222,29 @@ public class NetWorkManager : MonoBehaviour {
                 byte befor_signal=obj.recv_signal;
                 obj.recv_signal = obj.recvbuf[0];
                 Buffer.BlockCopy(obj.recvbuf, 1, obj.recvbuf, 0, obj.recvbyte - 1);
+
                 if (obj.recv_signal == NetworkController.SC_SELECT)
                 {
                     select_scene = true;
                     obj.recvbyte -= 1;
                     obj.signalread = true;
                 }
-                /*else if (obj.recv_signal == NetworkController.CS_SKILL) {
-                    //skill_select = true;
-                    obj.recvbyte -= 1;
-                    obj.signalread = false;
-                }
-                else if (befor_signal== NetworkController.CS_SKILL && (obj.recv_signal >= 0 || 4 > obj.recv_signal )) {
-                    skill_select = true;
+                else if (obj.recv_signal == NetworkController.SC_GAME_RESULT) {
+                    in_game = false;
+                    cursor.in_game = in_game;//차후 수정할것 이부분 필요없음 
                     obj.recvbyte -= 1;
                     obj.signalread = true;
-                    Debug.Log("Character Type : " + Convert.ToChar(obj.recv_signal));
-                }*/
-                else if (obj.recv_signal == NetworkController.SC_IN_GAME) {
-
+                }
+                else if (obj.recv_signal == NetworkController.SC_IN_GAME)
+                {
                     in_game = true;
                     cursor.in_game = in_game;//차후 수정할것 이부분 필요없음 
+                    obj.recvbyte -= 1;
+                    obj.signalread = true;
+                }
+                else if (obj.recv_signal == NetworkController.CS_SKILL) {
+                    skill_select = true;
+                    Debug.Log("Skill_Signal_recived");
                     obj.recvbyte -= 1;
                     obj.signalread = true;
                 }
@@ -298,9 +253,7 @@ public class NetWorkManager : MonoBehaviour {
                     obj.recvbyte -= 1;
                     obj.signalread = false;
                 }
-
-                if (obj.recv_signal == NetworkController.CS_SKILL) { Debug.Log("Skill_Signal_recived"); }
-
+                
                 Debug.Log(Convert.ToString(obj.recvbuf[0]) + " / " + Convert.ToString(obj.recv_signal));
                 Debug.Log(obj.signalread);
             }
@@ -326,14 +279,14 @@ public class NetWorkManager : MonoBehaviour {
                 {
                     Buffer.BlockCopy(obj.recvbuf, 0, obj.cbuf, 0, 75);
                     object recvobj = NetFunc.ByteToObj(obj.cbuf);
-                    Buffer.BlockCopy(obj.recvbuf, 404, obj.recvbuf, 0, obj.recvbyte - 75);
+                    Buffer.BlockCopy(obj.recvbuf, 75, obj.recvbuf, 0, obj.recvbyte - 75);
                     obj.recvbyte -= 75;
 
                     SC_TYPE_PACKET sc = (SC_TYPE_PACKET)recvobj;
                     My_type = sc.type;
                     Debug.Log("Type : " + Convert.ToString(sc.type));
 
-                    skill_select = true;
+                    //skill_select = true;
                     obj.recv_signal = NetworkController.S_NULL;
                     obj.signalread = true;
                 }
@@ -346,32 +299,7 @@ public class NetWorkManager : MonoBehaviour {
     }
 
     void Load_Data()
-    {/*
-        TextAsset textAsset;
-
-        try
-        {
-            textAsset = (TextAsset)Resources.Load("ConnectInfo");
-            Debug.Log(textAsset);
-            XmlDocument xmlDoc = new XmlDocument();
-            xmlDoc.LoadXml(textAsset.text);
-
-            XmlNodeList nodes = xmlDoc.SelectNodes("ConnectInfo/Last");
-
-            foreach (XmlNode node in nodes)
-            {
-                name = node.SelectSingleNode("Name").InnerText;
-                ip = node.SelectSingleNode("Ip").InnerText;
-                Ipfd.text = ip;
-                namefd.text = name;
-            }
-        }
-        catch (Exception e)
-        {
-            Debug.Log(e.Message);
-            //Creat_Data();
-        }
-        return;*/
+    {
         try
         {
             var path = Application.persistentDataPath + "/LastData.xml";
@@ -416,28 +344,13 @@ public class NetWorkManager : MonoBehaviour {
         Ip.InnerText = "No Ip";
         child.AppendChild(Ip);
 
-        //AssetDatabase.CreateAsset(xmlDoc, "/Assets/Resources/ConnectInfo.xml");
-        //AssetDatabase.SaveAssets();
-        //xmlDoc.Save("./Assets/Resources/ConnectInfo.xml");
+       
 
     }
 
     void OverLaped_Data(string ip, string name)//최종 데이터 덮어쓰기
     {
-        /*
-        TextAsset textAsset = (TextAsset)Resources.Load("ConnectInfo");
-        XmlDocument xmlDoc = new XmlDocument();
-        xmlDoc.LoadXml(textAsset.text);
-
-        XmlNodeList nodes = xmlDoc.SelectNodes("ConnectInfo/Last");
-        XmlNode character = nodes[0];
-
-        character.SelectSingleNode("Name").InnerText = name;
-        character.SelectSingleNode("Ip").InnerText = ip;
-        */
-
-        //xmlDoc.Save("ConnectInfo.xml");
-
+        
 
         last.name = name;
         last.ip = ip;

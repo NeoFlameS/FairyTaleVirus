@@ -1,6 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2015
+# Visual Studio 15
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MOBILEAPP", "MOBILEAPP.csproj", "{FFE155A8-D0D9-C61A-8B95-C18D3EEB39A7}"
 EndProject
 Global

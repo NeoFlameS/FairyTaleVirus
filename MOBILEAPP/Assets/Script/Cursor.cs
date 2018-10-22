@@ -7,16 +7,8 @@ using System;
 
 public class Cursor : MonoBehaviour
 {
-    //log 출력용 나중에 지울것
-    public Text TOUCHPOINT;
-    public Text TOUCHCOUNT;
-    public Text ScreenSize;
-    public Text Error;
-    public Text time;
-    public Text World;
-    public Text Mode;
-    public Text Camtype;
-    public Text inGames;
+    public GameObject view_manual;
+   
 
     public bool in_game = false;
     //이미지 설정
@@ -43,9 +35,10 @@ public class Cursor : MonoBehaviour
     //터치 관련 변수
     int touch_delay = 33;
     bool up_delay = false;
+    bool check = false;
 
     int mode = 0;//컨트롤 모드 : 0 / 카메라 제어 모드 : 1 
-    byte camera_type = 0;//0: 줌 1:회전 2:이동 3: 타겟
+    public byte camera_type = 0;//0: 줌 1:회전 2:이동 3: 타겟
 
     float pad_boundx;
     float pad_boundy;
@@ -77,7 +70,7 @@ public class Cursor : MonoBehaviour
         string img_path = "Img/ControllUI/pad_"+nm.My_Info.color;
         //Debug.Log("Pad Color path : "+img_path);
         pad_img.sprite = Resources.Load<Sprite>(img_path) as Sprite;
-        DontDestroyOnLoad(gameObject);
+        //DontDestroyOnLoad(gameObject);
     }
 
     // Update is called once per frame
@@ -86,6 +79,11 @@ public class Cursor : MonoBehaviour
         in_game = nm.in_game;
         int i;
         int touch_count = Input.touchCount;
+        if (nm.skill_select & check==false) {
+            nm.skill_select = false;
+            SceneManager.LoadScene("SelectSkill");
+            PadUp();
+        }
         if (touch_count > 0)
         {
 
@@ -114,14 +112,6 @@ public class Cursor : MonoBehaviour
             PadUp();
             up_delay = false;
         }
-
-        Mode.text = "Mode : "+Convert.ToString(mode);
-        Camtype.text = "Camera_Type : " + Convert.ToString(camera_type);
-
-        if (in_game) { inGames.text = "True"; }
-        else { inGames.text = "False"; }
-
-        time.text = frame.ToString();
     }
 
     void PadTouch(float x, float y, float z)
@@ -150,7 +140,7 @@ public class Cursor : MonoBehaviour
                 cs.y = y_a;
 
                 nm.GameDataSend(cs, NetworkController.CS_CAMERA_CHANGE);
-                if (touch_delay != 500) { touch_delay = 2000; }
+                if (touch_delay != 2000 && camera_type==3) { touch_delay = 2000; }
             }
         }
         else
@@ -160,7 +150,7 @@ public class Cursor : MonoBehaviour
             cur.transform.position = c.ScreenToWorldPoint(v);
 
 
-            World.text = "X : " + cur.transform.position.x + " Y : " + cur.transform.position.y;
+            
 
             //패드 터치 정보 송신
             if (DateTime.Now.Millisecond - frame.Millisecond >= touch_delay || DateTime.Now.Millisecond - frame.Millisecond < -touch_delay)
@@ -201,7 +191,7 @@ public class Cursor : MonoBehaviour
             pad_up++;
             touch_delay = 100;
             nm.GameDataSend(mov, NetworkController.CS_MOVE);
-            Error.text = "Pad_UP " + pad_up;
+            
         }
         
 
@@ -221,6 +211,7 @@ public class Cursor : MonoBehaviour
             }
             else {
                 camera_type = 0;
+                view_manual.GetComponent<GuideLine>().GuideLine_Change(camera_type);
             }     
         }
 
@@ -242,6 +233,7 @@ public class Cursor : MonoBehaviour
             }
             else {
                 camera_type = 1;
+                view_manual.GetComponent<GuideLine>().GuideLine_Change(camera_type);
             }
         }
         return;
@@ -262,6 +254,7 @@ public class Cursor : MonoBehaviour
             }
             else {
                 camera_type = 2;
+                view_manual.GetComponent<GuideLine>().GuideLine_Change(camera_type);
             }
         }
         return;
@@ -282,6 +275,7 @@ public class Cursor : MonoBehaviour
             }
             else {
                 camera_type = 3;
+                view_manual.GetComponent<GuideLine>().GuideLine_Change(camera_type);
             }
             
         }
@@ -303,14 +297,22 @@ public class Cursor : MonoBehaviour
     }
 
     public void BtnCamera() {
-        if (!in_game) { return; }
+        if (!in_game) {
+            mode = 0;
+            touch_delay = 33;
+            view_manual.SetActive(false);
+            return;
+        }
         else if (mode == 1)
         {
             mode = 0;
             touch_delay = 33;
+            view_manual.SetActive(false);
         }
         else {
             mode = 1;
+            view_manual.SetActive(true);
+            view_manual.GetComponent<GuideLine>().GuideLine_Change(camera_type);
         }
     }
 }

@@ -43,6 +43,7 @@ public class NetworkController : MonoBehaviour
     public const byte CS_UPGRADE = 35;
     public const byte SC_IN_GAME = 36;
     public const byte CS_CAMERA_CHANGE = 37;
+    public const byte SC_GAME_RESULT = 38;//0614 오전 10시 추가
     public const byte S_NULL = 125;
 
     void Start()

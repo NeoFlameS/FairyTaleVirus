@@ -141,49 +141,6 @@ public class SelectManager : MonoBehaviour {
 
         for (int i = 0; i< 4; i++) {
             if (sc.sk_id[i] == 200) { return; }//  다 선택 안됬을 때 안되게함
-            else {
-                switch (sc.sk_id[i]) {
-                    case 6:
-                        switch (type) {
-                            case 1:
-                                sc.sk_id[i] = 100;
-                                break;
-                            case 0:
-                                sc.sk_id[i] = 104;
-                                break;
-                            case 2:
-                                sc.sk_id[i] = 106;
-                                break;
-                            case 3:
-                                sc.sk_id[i] = 102;
-                                break;
-                            default:
-                                break;
-                        }
-                        break;
-                    case 7:
-                        switch (type)
-                        {
-                            case 1:
-                                sc.sk_id[i] = 101;
-                                break;
-                            case 0:
-                                sc.sk_id[i] = 105;
-                                break;
-                            case 2:
-                                sc.sk_id[i] = 107;
-                                break;
-                            case 3:
-                                sc.sk_id[i] = 103;
-                                break;
-                            default:
-                                break;
-                        }
-                        break;
-                    default:
-                        break;
-                }
-            }
         }
 
         GameObject.Find("NetWorkManager").GetComponent<NetWorkManager>().GameDataSend(sc,NetworkController.CS_SKILL);

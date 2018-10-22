@@ -40,6 +40,7 @@ public class StatScene : MonoBehaviour {
                 stat[i].MINT.text = "" + (short)scp.characterinfo[i].ch_int;
                 stat[i].MVIT.text = "" + (short)scp.characterinfo[i].ch_vit;
                 stat[i].MATK.text = "" + (short)scp.characterinfo[i].ch_atk;
+                stat[i].MMIND.text = "" + (short)scp.characterinfo[i].ch_mid;
             }
         }
 	}

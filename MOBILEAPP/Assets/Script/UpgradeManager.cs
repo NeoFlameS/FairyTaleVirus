@@ -57,6 +57,13 @@ public class UpgradeManager : MonoBehaviour {
         up.up_sg = 3;
         nm.GameDataSend(up, NetworkController.CS_UPGRADE);
     }
+    public void Mind_btn()
+    {
+        CS_UPGRADE_PACKET up = new CS_UPGRADE_PACKET();
+        up.id = id;
+        up.up_sg = 4;
+        nm.GameDataSend(up, NetworkController.CS_UPGRADE);
+    }
     public void Back_btn() {
         SceneManager.LoadScene("Connected");
     }

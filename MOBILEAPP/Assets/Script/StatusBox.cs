@@ -10,6 +10,7 @@ public class StatusBox : MonoBehaviour {
     public Text MATK;
     public Text MVIT;
     public Text MINT;
+    public Text MMIND;
     // Use this for initialization
     void Start () {
 		
