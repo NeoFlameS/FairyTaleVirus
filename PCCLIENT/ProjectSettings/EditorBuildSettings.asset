@@ -6,29 +6,29 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/Scene/intro.unity
+    path: Assets/Scene/Scene_Intro.unity
     guid: ec1604174ff723b429019da8d997f09d
   - enabled: 1
-    path: Assets/Scene/ConnectingScene.unity
+    path: Assets/Scene/Scene_Connecting.unity
     guid: 399053f0ccb78fc409eed0eccf42a8cd
   - enabled: 1
-    path: Assets/Scene/CharacterSelect.unity
+    path: Assets/Scene/Scene_CharacterSelect.unity
     guid: 9ca8285a1f72c3b40b5b35cc792a098d
   - enabled: 1
-    path: Assets/Scene/Main.unity
+    path: Assets/Scene/Scene_Main.unity
     guid: 062c83d39269c6a4b95ddb768d570872
   - enabled: 1
-    path: Assets/Scene/SinglePlay.unity
+    path: Assets/Scene/Scene_SinglePlay.unity
     guid: 7d345d1b05a7fdf44acf51bca0ed8df8
   - enabled: 1
-    path: Assets/Scene/MultiPlay.unity
-    guid: 07ed458b655478844ad3b37a7467cb5f
+    path: Assets/Scene/Scene_Result.unity
+    guid: 60a15d3ce879d294d8f2886ff0c22219
   - enabled: 1
-    path: Assets/Scene/Ready.unity
-    guid: 5860c95423e4e8b46b717627b868795b
-  - enabled: 1
-    path: Assets/Scene/InGame.unity
+    path: Assets/Scene/Scene_InGame1.unity
     guid: 13072bb78c2332e4d9b5aabfc31403ca
   - enabled: 1
-    path: Assets/Scene/Result.unity
-    guid: 89442120e17cb5741971929523361146
+    path: Assets/Scene/Scene_InGame2.unity
+    guid: 252310be691ee3048bce76453599fc92
+  - enabled: 1
+    path: Assets/Scene/Scene_InGame3.unity
+    guid: 07ed458b655478844ad3b37a7467cb5f

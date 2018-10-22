@@ -2,12 +2,13 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using System;
 
 public class SetSkillSelect : MonoBehaviour {
     public string[] ch_name = { "빨간망토", "사서", "앨리스" };
 
     public Image img_character;
-    public Image[] img_skill = new Image[4];
+    public Image[] img_skill= new Image[4];
     public Text nickname;
     public Text character;
     public Text grade;
@@ -18,10 +19,11 @@ public class SetSkillSelect : MonoBehaviour {
         {
             //기본설정 이미지같은거 가져와~
             character.text = "";
+            //img_character.overrideSprite = Resources.Load<Sprite>("UI/ui_character_default") as Sprite;
             img_character.sprite = Resources.Load<Sprite>("UI/ui_character_default") as Sprite;
             for (int i = 0; i < 4; ++i)
             {
-                img_skill[i].sprite = Resources.Load<Sprite>("UI/ui_character_default") as Sprite;
+                img_skill[i].sprite = Resources.Load<Sprite>("UI/ui_skill_default") as Sprite;
                 status[i].text = "";
             }
             nickname.text = nick;
@@ -32,7 +34,7 @@ public class SetSkillSelect : MonoBehaviour {
         character.text = ch_name[c.ch_type];
         img_character.sprite = Resources.Load<Sprite>("UI/ui_characterbox_" + c.ch_type) as Sprite;
         for (int i = 0; i < 4; ++i){
-            img_skill[i].sprite = Resources.Load<Sprite>("UI/ui_skillbox_" + c.skill[i]) as Sprite;
+            img_skill[i].sprite = Resources.Load<Sprite>("UI/Skill_s/ui_skill_s" + c.skill[i]) as Sprite;
         }
         nickname.text = nick;
         grade.text = c.clearedround.ToString();
@@ -42,9 +44,9 @@ public class SetSkillSelect : MonoBehaviour {
         status[3].text = c.ch_mid.ToString();
     }
 
-    public void setskills(char[] skillset) {
+    public void setskills(int[] skillset) {
         for (int i = 0; i < 4; ++i) {
-            img_skill[i].sprite = Resources.Load<Sprite>("UI/ui_skill_img_" + skillset[i]) as Sprite;
+            img_skill[i].sprite = Resources.Load<Sprite>("UI/Skill_s/ui_skill_s" + skillset[i]) as Sprite;
         }
     }
 }

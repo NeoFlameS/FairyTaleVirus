@@ -13,38 +13,83 @@ public class CursorControl : MonoBehaviour {
     public bool[] clicked;
     public int[] btnnumber;
 
+    float[] C_clampV;
+
     public SelectManager SM;
 
     float scx, scy;
 
-    CharacterCard[] selectedbutton = new CharacterCard[4];
+    public CharacterCard[] selectedbutton = new CharacterCard[4];
     byte[] buttonid = new byte[4];
 
     public string[] nickname = new string[4];
 
     void OnLevelWasLoaded() {
-        if (7 == SceneManager.GetActiveScene().buildIndex) Destroy(this);
+        if (5 < SceneManager.GetActiveScene().buildIndex) {
+            
+            return;
+        }
         cursor[0] = GameObject.Find("Cursor");
         cursor[1] = GameObject.Find("Cursor2");
         cursor[2] = GameObject.Find("Cursor3");
         cursor[3] = GameObject.Find("Cursor4");
+
+        for (int i = 0; i < 4; ++i)
+        {
+            if(false == iscursorconnected[i])
+                cursor[i].SetActive(false);
+        }
     }
 
     // Use this for initialization
     void Start() {
+        C_clampV = new float[4];
         clicked = new bool[4]{ false, false, false, false };
         btnnumber = new int[4];
         DontDestroyOnLoad(gameObject);
-        scx = Option.screensize.x;
-        scy = Option.screensize.y;
+        scx = GameObject.Find("GameOptionPrefab").GetComponent<Option>().option.ScreenSizeX;
+        scy = GameObject.Find("GameOptionPrefab").GetComponent<Option>().option.ScreenSizeX;
         cursor[0] = GameObject.Find("Cursor");
         cursor[1] = GameObject.Find("Cursor2");
         cursor[2] = GameObject.Find("Cursor3");
         cursor[3] = GameObject.Find("Cursor4");
+
+        for (int i = 0; i < 4; ++i) {
+            cursor[i].SetActive(false);
+        }
+
+        C_clampV[0] = (-1 * scx) / 2;
+        C_clampV[1] = scx / 2;
+        C_clampV[2] = (-1 * scy) / 2;
+        C_clampV[3] = scy / 2;
+    }
+    public void Init()//오후 4시 추가
+    {
+        C_clampV = new float[4];
+        clicked = new bool[4] { false, false, false, false };
+        btnnumber = new int[4];
+        DontDestroyOnLoad(gameObject);
+        scx = GameObject.Find("GameOptionPrefab").GetComponent<Option>().option.ScreenSizeX;
+        scy = GameObject.Find("GameOptionPrefab").GetComponent<Option>().option.ScreenSizeX;
+        cursor[0] = GameObject.Find("Cursor");
+        cursor[1] = GameObject.Find("Cursor2");
+        cursor[2] = GameObject.Find("Cursor3");
+        cursor[3] = GameObject.Find("Cursor4");
+
+        for (int i = 0; i < 4; ++i)
+        {
+            cursor[i].SetActive(false);
+        }
+
+        C_clampV[0] = (-1 * scx) / 2;
+        C_clampV[1] = scx / 2;
+        C_clampV[2] = (-1 * scy) / 2;
+        C_clampV[3] = scy / 2;
+
     }
 
     public void move(float x, float y, int playernumber){
-        Vector2 v = new Vector2(60 * (scx / 1920) * x, 60 * (scy / 1080) * y);
+        Vector2 v = new Vector2(80 * (scx / 2560) * x, 60 * (scy / 1440) * y);
         cursormovevector[playernumber] = v;
     }
 
@@ -73,7 +118,8 @@ public class CursorControl : MonoBehaviour {
                     return false;
                 }
                 btid[i] = selectedbutton[i].CCid;
-            } 
+            }
+            else btid[i] = 125;
         }
 
         buttonid = btid;
@@ -96,7 +142,8 @@ public class CursorControl : MonoBehaviour {
         Physics.Raycast(ray, out hit, Mathf.Infinity);
 
         Debug.DrawRay(ray.origin, ray.direction * 10000f, Color.red, 5f);
-
+        int roop = 0;
+        int count = 0;
 
         if (hit.collider == null)
         {
@@ -111,14 +158,19 @@ public class CursorControl : MonoBehaviour {
         //캐릭터 생성 삭제시 UI 어떻게할것인가===============================
         else if (hit.collider.tag == "CHARACTERCARD")
         {
+            
             GameObject tmp;
             tmp = GameObject.Find("Select Manager(Clone)");
             if (null != tmp) SM = tmp.GetComponent<SelectManager>();
             switch (btnnumber[i])
             {
-                case 0:
+                case 0://5.31 홍승준 수정
+                    if (SM == null || selectedbutton[i] == null)
+                    {
+                        break;
+                    }
                     //5.15 홍승준 추가 -- 생성 씬 5.18 홍승준 수정
-                    GameObject.Find("Network Manager(Clone)").GetComponent<MobileNetwork>().SignalSend(i,NetworkController.SC_SELECT);
+                    GameObject.Find("Network Manager(Clone)").GetComponent<MobileNetwork>().SignalSend(i, NetworkController.SC_SELECT);
                     GameObject.Find("Network Manager(Clone)").GetComponent<MobileNetwork>().Get_SelectManger();
                     //끝
 
@@ -137,7 +189,7 @@ public class CursorControl : MonoBehaviour {
                     break;
                 case 2:
                     if (null == selectedbutton[i]) break;
-                    SM.DeleteCharacter(selectedbutton[i].CCid);
+                    SM.DeleteCharacter(selectedbutton[i]);
                     break;
                 case 3:
                     if (null == selectedbutton[i]) break;
@@ -152,11 +204,17 @@ public class CursorControl : MonoBehaviour {
 
 	// Update is called once per frame
 	public void Update () {
-		for (int i = 0; i < 4; ++i) {
+        if (5 < SceneManager.GetActiveScene().buildIndex)
+        {
+
+            return;
+        }
+        for (int i = 0; i < 4; ++i) {
 			if (iscursorconnected [i]) {
+                if (false == cursor[i].activeSelf) cursor[i].SetActive(true);
 				cursor [i].transform.position += new Vector3 (cursormovevector [i].x, cursormovevector [i].y,0) * Time.fixedDeltaTime;
-				Mathf.Clamp (cursor [i].transform.position.x, 0, scx);
-				Mathf.Clamp (cursor [i].transform.position.y, 0, scy);
+				Mathf.Clamp (cursor [i].transform.position.x, C_clampV[0], C_clampV[1]);
+				Mathf.Clamp (cursor [i].transform.position.y, C_clampV[2], C_clampV[3]);
 
                 if (clicked[i])
                 {

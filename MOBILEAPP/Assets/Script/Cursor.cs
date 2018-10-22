@@ -14,7 +14,11 @@ public class Cursor : MonoBehaviour
     public Text Error;
     public Text time;
     public Text World;
-    
+    public Text Mode;
+    public Text Camtype;
+    public Text inGames;
+
+    public bool in_game = false;
     //이미지 설정
     public Image pad_img;
 
@@ -35,6 +39,16 @@ public class Cursor : MonoBehaviour
     Vector3 v;
     Touch now;//현재 터치 
     int pad_index = 10;//디폴트 터치 카운트
+    int pad_up = 0;
+    //터치 관련 변수
+    int touch_delay = 33;
+    bool up_delay = false;
+
+    int mode = 0;//컨트롤 모드 : 0 / 카메라 제어 모드 : 1 
+    byte camera_type = 0;//0: 줌 1:회전 2:이동 3: 타겟
+
+    float pad_boundx;
+    float pad_boundy;
                        // Use this for initialization
     void Start()
     {
@@ -43,7 +57,8 @@ public class Cursor : MonoBehaviour
         cur = GameObject.Find("Cursor");
 
         //이미지 변수 초기화
-        
+        pad_boundx = (Screen.width / 2) - 100;
+        pad_boundy = 3 * Screen.height / 4;
 
         //좌표 변수들
         startpos = cur.transform.position;
@@ -54,6 +69,8 @@ public class Cursor : MonoBehaviour
         //네트워크 통신용 변수 초기화
         
         nm = GameObject.Find("NetWorkManager").GetComponent<NetWorkManager>();//네트워크 매니저 오브젝트에 접근 클래스 불러오기
+        nm.Get_CS();
+        
         
         frame = DateTime.Now;
 
@@ -66,153 +83,234 @@ public class Cursor : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        TOUCHCOUNT.text = " " + Input.touchCount;
-        //cur.transform.position.Set()
-        if (Input.touchCount > 0)
+        in_game = nm.in_game;
+        int i;
+        int touch_count = Input.touchCount;
+        if (touch_count > 0)
         {
-            int count = Input.touchCount;
 
-            now = Input.touches;
-
-            //터치 부터 처리
-            for (int i = 0; i < count; ++i)
+            for (i = 0; i < touch_count; i++)
             {
-                now = Input.GetTouch(i);
-                
-                TOUCHPOINT.text = "X : " + now.position.x + " Y : " + now.position.y;
-                ScreenSize.text = Screen.width + " X " + Screen.height;
-                
-                if (now.position.x < pad_boundx && now.position.y < pad_boundy)
+                Touch touch = Input.GetTouch(i);
+                if (touch.position.x < pad_boundx && touch.position.y < pad_boundy)
                 {
-                    if ((now.phase == TouchPhase.Ended || now.phase == TouchPhase.Canceled))
+                    switch (touch.phase)
                     {
-                        //패드를 터치했던 손을 땠을 때
-                        PadUp();
-                        break;
+                        case TouchPhase.Began:
+                        case TouchPhase.Moved:
+                        case TouchPhase.Stationary:
+
+                            PadTouch(touch.position.x, touch.position.y, startpos.z);
+                            up_delay = true;
+                            break;
+                        default:
+                            PadUp();
+                            break;
                     }
-                    else
-                    {
-                        //float x, y, z;
-                        Error.text = "Pad Touch";
-                        PadTouch(now.position.x, now.position.y, startpos.z);
-                    }
-                }
-                else {
-                    Error.text = "Not Pad Touch";
                 }
             }
         }
+        else if(up_delay){
+            PadUp();
+            up_delay = false;
+        }
+
+        Mode.text = "Mode : "+Convert.ToString(mode);
+        Camtype.text = "Camera_Type : " + Convert.ToString(camera_type);
+
+        if (in_game) { inGames.text = "True"; }
+        else { inGames.text = "False"; }
 
         time.text = frame.ToString();
-        
     }
 
-    void PadTouch(float x,float y,float z)
+    void PadTouch(float x, float y, float z)
     {//패드를 터치했을때 
+        float x_a, y_a;
 
-        
-        v.Set(x,y,z);
-        
-        cur.transform.position = c.ScreenToWorldPoint(v);
-        
 
-        World.text= "X : " + cur.transform.position.x + " Y : " + cur.transform.position.y;
-
-        //패드 터치 정보 송신
-        if (DateTime.Now.Millisecond - frame.Millisecond >= 33 || DateTime.Now.Millisecond - frame.Millisecond < -33)
+        if (mode == 1)
         {
+            v.Set(x, y, z);
+            pad_up = 0;
+            cur.transform.position = c.ScreenToWorldPoint(v);
 
-            frame = DateTime.Now;
-            CS_MOVE_PACKET mov;
-            mov.id = nm.My_Info.id;
-
+            TimeSpan t = DateTime.Now - frame;
             
-            mov.x = (x - startpos_screen.x)/(Screen.width / 4);
-            mov.y = (y - startpos_screen.y)/(Screen.height / 3);
+            if (((t.Minutes*60+t.Seconds)*1000)+t.Milliseconds >= touch_delay )
+            {
+                frame = DateTime.Now;
+                CS_CAMERA_PACKET cs = new CS_CAMERA_PACKET();
+
+                x_a = (x - startpos_screen.x) / (Screen.width / 4);
+                y_a = (y - startpos_screen.y) / (Screen.height / 3);
+
+                cs.type = camera_type;
+                cs.x = x_a;
+                cs.y = y_a;
+
+                nm.GameDataSend(cs, NetworkController.CS_CAMERA_CHANGE);
+                if (touch_delay != 500) { touch_delay = 2000; }
+            }
+        }
+        else
+        {
+            v.Set(x, y, z);
+            pad_up = 0;
+            cur.transform.position = c.ScreenToWorldPoint(v);
 
 
-            nm.GameDataSend(mov, NetworkController.CS_MOVE);
+            World.text = "X : " + cur.transform.position.x + " Y : " + cur.transform.position.y;
+
+            //패드 터치 정보 송신
+            if (DateTime.Now.Millisecond - frame.Millisecond >= touch_delay || DateTime.Now.Millisecond - frame.Millisecond < -touch_delay)
+            {
+
+                frame = DateTime.Now;
+                CS_MOVE_PACKET mov;
+                mov.id = nm.My_Info.id;
+
+
+                mov.x = (x - startpos_screen.x) / (Screen.width / 4);
+                mov.y = (y - startpos_screen.y) / (Screen.height / 3);
+
+
+                nm.GameDataSend(mov, NetworkController.CS_MOVE);
+
+                if (touch_delay != 33) { touch_delay = 33; }
+            }
         }
     }
 
     void PadUp()
     {
-        cur.transform.position = startpos;
+        if (mode == 1)
+        {
+            cur.transform.position = startpos;
+        }
+        else {
+            cur.transform.position = startpos;
 
-        frame = DateTime.Now;
-        CS_MOVE_PACKET mov;
-        mov.id = nm.My_Info.id;
+            frame = DateTime.Now;
+            CS_MOVE_PACKET mov;
+            mov.id = nm.My_Info.id;
 
 
-        mov.x = 0;
-        mov.y = 0;
-
-
-        nm.GameDataSend(mov, NetworkController.CS_MOVE);
+            mov.x = 0;
+            mov.y = 0;
+            pad_up++;
+            touch_delay = 100;
+            nm.GameDataSend(mov, NetworkController.CS_MOVE);
+            Error.text = "Pad_UP " + pad_up;
+        }
+        
 
     }
 
     public void Btn0Touch()
     {//1번 버튼을 터치했을때 
         if (DateTime.Now.Millisecond - frame.Millisecond >= 33 || DateTime.Now.Millisecond - frame.Millisecond < -33) {
-            frame = DateTime.Now;
-            CS_BUTTON_PACKET bt;
-            bt.id = nm.My_Info.id;
-            bt.btn_number = (char)0;
+            if (mode == 0)
+            {
+                frame = DateTime.Now;
+                CS_BUTTON_PACKET bt;
+                bt.id = nm.My_Info.id;
+                bt.btn_number = (char)0;
 
-            nm.GameDataSend(bt, NetworkController.CS_BTN);
+                nm.GameDataSend(bt, NetworkController.CS_BTN);
+            }
+            else {
+                camera_type = 0;
+            }     
         }
 
         return;
     }
     public void Btn1Touch()
     {//2번 버튼을 터치했을때 
-        //아직 미구현
+       
         if (DateTime.Now.Millisecond - frame.Millisecond >= 33 || DateTime.Now.Millisecond - frame.Millisecond < -33)
         {
-            frame = DateTime.Now;
-            CS_BUTTON_PACKET bt;
-            bt.id = nm.My_Info.id;
-            bt.btn_number = (char)1;
+            if (mode == 0)
+            {
+                frame = DateTime.Now;
+                CS_BUTTON_PACKET bt;
+                bt.id = nm.My_Info.id;
+                bt.btn_number = (char)1;
 
-            nm.GameDataSend(bt, NetworkController.CS_BTN);
+                nm.GameDataSend(bt, NetworkController.CS_BTN);
+            }
+            else {
+                camera_type = 1;
+            }
         }
         return;
     }
     public void Btn2Touch()
     {//3번 버튼을 터치했을때 
-        //아직 미구현
+        
         if (DateTime.Now.Millisecond - frame.Millisecond >= 33 || DateTime.Now.Millisecond - frame.Millisecond < -33)
         {
-            frame = DateTime.Now;
-            CS_BUTTON_PACKET bt;
-            bt.id = nm.My_Info.id;
-            bt.btn_number = (char)2;
+            if (mode == 0)
+            {
+                frame = DateTime.Now;
+                CS_BUTTON_PACKET bt;
+                bt.id = nm.My_Info.id;
+                bt.btn_number = (char)2;
 
-            nm.GameDataSend(bt, NetworkController.CS_BTN);
+                nm.GameDataSend(bt, NetworkController.CS_BTN);
+            }
+            else {
+                camera_type = 2;
+            }
         }
         return;
     }
     public void Btn3Touch()
     {//4번 버튼을 터치했을때 
-        //아직 미구현
+        
         if (DateTime.Now.Millisecond - frame.Millisecond >= 33 || DateTime.Now.Millisecond - frame.Millisecond < -33)
         {
-            frame = DateTime.Now;
-            CS_BUTTON_PACKET bt;
-            bt.id = nm.My_Info.id;
-            bt.btn_number = (char)3;
+            if (mode == 0)
+            {
+                frame = DateTime.Now;
+                CS_BUTTON_PACKET bt;
+                bt.id = nm.My_Info.id;
+                bt.btn_number = (char)3;
 
-            nm.GameDataSend(bt, NetworkController.CS_BTN);
+                nm.GameDataSend(bt, NetworkController.CS_BTN);
+            }
+            else {
+                camera_type = 3;
+            }
+            
         }
         return;
     }
 
     public void BtnStat() {
-        SceneManager.LoadScene("Status");
+        PadUp();
+        if (!in_game) { return; }
+        else { SceneManager.LoadScene("Status"); }
+        
     }
 
     public void BtnUpgrade() {
-        SceneManager.LoadScene("Upgrade");
+        PadUp();
+        if (!in_game) { return; }
+        else { SceneManager.LoadScene("Upgrade"); }
+        
+    }
+
+    public void BtnCamera() {
+        if (!in_game) { return; }
+        else if (mode == 1)
+        {
+            mode = 0;
+            touch_delay = 33;
+        }
+        else {
+            mode = 1;
+        }
     }
 }

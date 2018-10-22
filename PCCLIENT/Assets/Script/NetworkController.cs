@@ -22,7 +22,6 @@ public class NetworkController : MonoBehaviour
 	public const byte SC_CHARACTERINFOSET = 14;
 	public const byte SC_SKILLSET = 15;
 	public const byte SC_SCENECHANGE = 16;
-    public const byte CS_UPGRADE = 35;//5.20 홍승준 추가
     public const byte S_NULL = 125;
     
     public const byte PP_CONNECT = 20;
@@ -39,11 +38,13 @@ public class NetworkController : MonoBehaviour
     public const byte PP_SKILLSET = 31;
 
     public const byte CS_REQCHR = 32;
-    public const byte SC_SELECT = 33;
-    public const byte CS_SKILL = 34;
-    //라운드 정보 = 캐릭터 이동명령(포인터 위치) + 몬스터 위치 + 오염도 수치 + 공유자원 따로 보냄
-    //char -> byte 변경
-
+    public const byte SC_SELECT = 33;//캐릭터 셀렉트 씬
+    public const byte CS_SKILL = 34;//스킬 셀렉트 씬
+    public const byte CS_UPGRADE = 35;//5.20 홍승준 추가
+    public const byte SC_IN_GAME = 36;//5.31 홍승준 추가
+    public const byte CS_CAMERA_CHANGE = 37;
+    public const byte SC_GAME_RESULT = 38;//0614 오전 10시 추가
+    
 
 
     void Start(){
@@ -89,7 +90,6 @@ public class NetworkController : MonoBehaviour
 	public bool net_send_signal(byte type, Socket s)
 	{
 		byte[] send_signal = new byte[1] { type };
-        Debug.Log(type);
 		s.Send(send_signal);
 		return true;
 	}
@@ -150,6 +150,13 @@ public class NetworkController : MonoBehaviour
                 break;
             case SC_SCENECHANGE:
                 if (send_data.Length != 91)
+                {
+                    Debug.Log("net_send 오류 byte array의 길이가 표준치와 다릅니다. 패킷의 길이를 확인하세요.원래 91 현재 패킷 길이 " + send_data.Length);
+                    return false;
+                }
+                break;
+            case CS_SKILL:
+                if (send_data.Length != 75)
                 {
                     Debug.Log("net_send 오류 byte array의 길이가 표준치와 다릅니다. 패킷의 길이를 확인하세요.원래 91 현재 패킷 길이 " + send_data.Length);
                     return false;
@@ -292,6 +299,26 @@ public struct SP_RECONNECT_PACKET
     public byte[][] sk_id;
 }
 
+[Serializable]
+public struct CS_SELECT_PACKET
+{
+    public byte id;
+    public byte model;
+    public byte type;
+}
+
+[Serializable]
+public struct CS_CAMERA_CHANGE_PACKET
+{
+    public byte cammode;
+    public byte zoom;
+    public byte rotation;
+}
+[Serializable]
+public struct SC_TYPE_PACKET//75
+{
+    public byte type;
+}
 
 
 /*  public const byte SS_MONSTERSETINFO = 23; // 라운드 시작시
@@ -303,3 +330,9 @@ public struct SP_RECONNECT_PACKET
     public const byte SS_ENDGAME = 29;
     public const byte SS_WINGAME = 30;
 */
+[Serializable]
+public struct CS_CAMERA_PACKET
+{
+    public byte type;
+    public float x,y;
+}

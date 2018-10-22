@@ -17,6 +17,8 @@ public class CharacterCard : MonoBehaviour {
     public Image image_character;
     public Image[] image_skill;
 
+    public int select_id=-1;//6.01 홍승준 추가
+
     public void init() {
         selectedcolor.color = Color.clear;
         clearedround = -1;
@@ -40,7 +42,7 @@ public class CharacterCard : MonoBehaviour {
         string filename = "UI/ui_character_" + ch_type;
         image_character.sprite = Resources.Load<Sprite>(filename) as Sprite;
         for (int i = 0; i < 4; ++i){
-            filename = "UI/ui_skill_" + skillset[i];
+            filename = "UI/Skill/ui_skill_" + skillset[i];
             image_skill[i].sprite = Resources.Load<Sprite>(filename) as Sprite;
         }
     }
@@ -48,6 +50,7 @@ public class CharacterCard : MonoBehaviour {
     public bool clicked(int c) {
         if (true == g_clicked) return false;
         g_clicked = true;
+        select_id = c;//6.01 홍승준 추가
         switch (c)
         {
             case 0:

@@ -29,15 +29,10 @@ public class StatScene : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
+        int i = 0;
         if (nm.recv_charinfo) {
             //리시브 된 데이터가 있을 때 데이터 업데이트
             scp = nm.scinf;
-            nm.recv_charinfo = false;
-            recv = true;
-            //씬의 데이터 표시 변경 부분
-        }
-        int i = 0;
-        if (recv) {
             for (i = 0; i < 4; i++)
             {
                 stat[i].MSTR.text = "" + (short)scp.characterinfo[i].ch_str;
@@ -45,11 +40,8 @@ public class StatScene : MonoBehaviour {
                 stat[i].MINT.text = "" + (short)scp.characterinfo[i].ch_int;
                 stat[i].MVIT.text = "" + (short)scp.characterinfo[i].ch_vit;
                 stat[i].MATK.text = "" + (short)scp.characterinfo[i].ch_atk;
-                recv = false;
             }
         }
-        
-        
 	}
 
     public void BackBtn() {

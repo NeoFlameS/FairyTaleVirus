@@ -141,12 +141,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: aeb5275c3c9108249a9955eb2f061b23, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  scinf:
+    characterinfo: []
+  recv_charinfo: 0
   Ipfd: {fileID: 194506110}
   namefd: {fileID: 1854042529}
   OK: {fileID: 1799644451}
+  in_game: 0
   My_Info:
     id: 0
     color: 0
+  NetFunc: {fileID: 0}
 --- !u!4 &107665780
 Transform:
   m_ObjectHideFlags: 0
@@ -514,7 +519,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: Enter text...
+  m_Text: Enter Ip...
 --- !u!222 &759960920
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -743,7 +748,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: Enter text...
+  m_Text: Enter name...
 --- !u!222 &1344926058
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -1246,7 +1251,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: Button
+  m_Text: Ok
 --- !u!222 &1860833253
 CanvasRenderer:
   m_ObjectHideFlags: 0

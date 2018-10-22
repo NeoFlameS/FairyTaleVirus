@@ -6,10 +6,16 @@ using System.Net;
 using System.Net.Sockets;
 using UnityEngine.SceneManagement;
 using System;
+using System.IO;
+using System.Xml.Serialization;
+using System.Xml;
+
 //using System.Buffer;
 
 
 public class NetWorkManager : MonoBehaviour {
+    //스킬 셀렉트 변수
+    public byte My_type=126;
     //캐릭터 변수
     public SC_CHARACTERINFOSET_PACKET scinf;
     public bool recv_charinfo=false;
@@ -17,14 +23,20 @@ public class NetWorkManager : MonoBehaviour {
     public InputField Ipfd;
     public InputField namefd;
     public Button OK;
-    bool select_scene;
+    bool select_scene;//캐릭터 셀렉트
+    bool skill_select;//스킬 셀렉트
+    public bool in_game;
     //소켓 연결 정보
     int state;
     string name;
+    string or_name;
     string ip;
+
+    OptionSet last;
 
     public SC_CONNECT_PACKET My_Info;
 
+    bool byte_recv = false;
     //소켓 관련 변수
     public NetworkController NetFunc;
     Socket sck;
@@ -32,6 +44,7 @@ public class NetWorkManager : MonoBehaviour {
     byte[] buffer = new byte[NetworkController.MAXBUFFERSIZE];
     int byteRead;
 
+    Cursor cursor;
     //CMessageResolver PacketReader;
     // Use this for initialization
     /*
@@ -40,6 +53,8 @@ public class NetWorkManager : MonoBehaviour {
         scinf[] = sc;
     }*/
     void Start() {
+        last = new OptionSet();
+
         NetFunc = this.GetComponent<NetworkController>();
         state = 0;
         name = "No Name";
@@ -48,6 +63,10 @@ public class NetWorkManager : MonoBehaviour {
         My_Info.color = 'n';
         //PacketReader = new CMessageResolver();
         DontDestroyOnLoad(gameObject);
+
+        select_scene = false;
+        skill_select = false;
+        in_game = false;
 
         //Packet 크기 테스트용 지울것
         /*
@@ -92,6 +111,13 @@ public class NetWorkManager : MonoBehaviour {
         CS_UPGRADE_PACKET up = new CS_UPGRADE_PACKET();  크기 85
         Debug.Log("CS_UPGRADE_PACKET : " + NetFunc.ObjToByte(up).Length);*/
 
+        CS_CAMERA_PACKET cs = new CS_CAMERA_PACKET();
+        cs.type = 1;
+        cs.y = 1;
+        cs.x = 1;
+        
+        Debug.Log("CS_CAMERA_PACKET : " + NetFunc.ObjToByte(cs).Length);
+        Load_Data();
     }
 
     // Update is called once per frame
@@ -106,8 +132,13 @@ public class NetWorkManager : MonoBehaviour {
             }
         }
 
-        if (select_scene) {
+        if (select_scene) {//캐릭터 셀렉트 씬
             select_scene = false;
+            SceneManager.LoadScene("CharacterSelect");//캐릭터 셀렉트 씬 으로 변경할것
+        }
+
+        if (skill_select) {
+            skill_select = false;
             SceneManager.LoadScene("SelectSkill");
         }
     }
@@ -124,6 +155,7 @@ public class NetWorkManager : MonoBehaviour {
         else if (namefd.text.Length < 10)
         {
             name = namefd.text;
+            or_name = name;
             while (name.Length < 10) {
                 name = name.Insert(name.Length, "*");
             }
@@ -155,6 +187,8 @@ public class NetWorkManager : MonoBehaviour {
         //소켓 설정
         sck = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
         IPEndPoint localEndPoint = new IPEndPoint(IPAddress.Parse(ip), 8080);
+
+        OverLaped_Data(ip, or_name);//연결 데이터 저장
 
         //Connect
         try
@@ -196,7 +230,7 @@ public class NetWorkManager : MonoBehaviour {
 
         buffer = NetFunc.ObjToByte(CSpacket);
         NetFunc.net_send(CSpacket, sck, NetworkController.CS_CONNECT);
-
+        sck.NoDelay=true;
         //비동기 시작
         IAsyncClient sync_obj = new IAsyncClient();
         sync_obj.sck = sck;
@@ -232,6 +266,7 @@ public class NetWorkManager : MonoBehaviour {
         if (obj.recvbyte > 0 || bytesRead > 0) {
             if (true == obj.signalread)
             {
+                byte befor_signal=obj.recv_signal;
                 obj.recv_signal = obj.recvbuf[0];
                 Buffer.BlockCopy(obj.recvbuf, 1, obj.recvbuf, 0, obj.recvbyte - 1);
                 if (obj.recv_signal == NetworkController.SC_SELECT)
@@ -240,11 +275,32 @@ public class NetWorkManager : MonoBehaviour {
                     obj.recvbyte -= 1;
                     obj.signalread = true;
                 }
-                else {
+                /*else if (obj.recv_signal == NetworkController.CS_SKILL) {
+                    //skill_select = true;
                     obj.recvbyte -= 1;
                     obj.signalread = false;
                 }
-                
+                else if (befor_signal== NetworkController.CS_SKILL && (obj.recv_signal >= 0 || 4 > obj.recv_signal )) {
+                    skill_select = true;
+                    obj.recvbyte -= 1;
+                    obj.signalread = true;
+                    Debug.Log("Character Type : " + Convert.ToChar(obj.recv_signal));
+                }*/
+                else if (obj.recv_signal == NetworkController.SC_IN_GAME) {
+
+                    in_game = true;
+                    cursor.in_game = in_game;//차후 수정할것 이부분 필요없음 
+                    obj.recvbyte -= 1;
+                    obj.signalread = true;
+                }
+                else
+                {
+                    obj.recvbyte -= 1;
+                    obj.signalread = false;
+                }
+
+                if (obj.recv_signal == NetworkController.CS_SKILL) { Debug.Log("Skill_Signal_recived"); }
+
                 Debug.Log(Convert.ToString(obj.recvbuf[0]) + " / " + Convert.ToString(obj.recv_signal));
                 Debug.Log(obj.signalread);
             }
@@ -260,17 +316,148 @@ public class NetWorkManager : MonoBehaviour {
                     //캐릭터 인포 셋 수신
                     scinf = (SC_CHARACTERINFOSET_PACKET)recvobj;
                     recv_charinfo = true;
-                    
+
                     //Debug.Log("type : " + Convert.ToString(res.characterinfo[].ch_type) + " / vit : " + Convert.ToString(res.ch_vit));
 
+                    obj.recv_signal = NetworkController.S_NULL;
+                    obj.signalread = true;
+                }
+                else if (obj.recv_signal == NetworkController.CS_SKILL && obj.recvbyte >= 75)
+                {
+                    Buffer.BlockCopy(obj.recvbuf, 0, obj.cbuf, 0, 75);
+                    object recvobj = NetFunc.ByteToObj(obj.cbuf);
+                    Buffer.BlockCopy(obj.recvbuf, 404, obj.recvbuf, 0, obj.recvbyte - 75);
+                    obj.recvbyte -= 75;
+
+                    SC_TYPE_PACKET sc = (SC_TYPE_PACKET)recvobj;
+                    My_type = sc.type;
+                    Debug.Log("Type : " + Convert.ToString(sc.type));
+
+                    skill_select = true;
                     obj.recv_signal = NetworkController.S_NULL;
                     obj.signalread = true;
                 }
             }
         }
         obj.sck.BeginReceive(obj.recvbuf, obj.recvbyte, NetworkController.MAXBUFFERSIZE-obj.recvbyte, 0, new AsyncCallback(ReciveCallBack), obj);
-    }       
+    }
+    public void Get_CS() {
+        cursor = GameObject.Find("Cursor").GetComponent<Cursor>();
+    }
+
+    void Load_Data()
+    {/*
+        TextAsset textAsset;
+
+        try
+        {
+            textAsset = (TextAsset)Resources.Load("ConnectInfo");
+            Debug.Log(textAsset);
+            XmlDocument xmlDoc = new XmlDocument();
+            xmlDoc.LoadXml(textAsset.text);
+
+            XmlNodeList nodes = xmlDoc.SelectNodes("ConnectInfo/Last");
+
+            foreach (XmlNode node in nodes)
+            {
+                name = node.SelectSingleNode("Name").InnerText;
+                ip = node.SelectSingleNode("Ip").InnerText;
+                Ipfd.text = ip;
+                namefd.text = name;
+            }
+        }
+        catch (Exception e)
+        {
+            Debug.Log(e.Message);
+            //Creat_Data();
+        }
+        return;*/
+        try
+        {
+            var path = Application.persistentDataPath + "/LastData.xml";
+            var serializer = new XmlSerializer(typeof(OptionSet));
+            var stream = new FileStream(path, FileMode.Open);
+            last = serializer.Deserialize(stream) as OptionSet;
+            Ipfd.text = last.ip;
+            namefd.text = last.name;
+            stream.Close();
+            return;
+        }
+        catch (Exception e)
+        {
+            //Debug.Log(e);
+            Debug.Log(e.Message);
+            return;
+            //error;
+        }
+
+    }
+
+    void Creat_Data() {//파일 생성
+        XmlDocument xmlDoc = new XmlDocument();
+
+        // Xml을 선언한다(xml의 버전과 인코딩 방식을 정해준다.)
+        xmlDoc.AppendChild(xmlDoc.CreateXmlDeclaration("1.0", "utf-8", "yes"));
+
+        // 루트 노드 생성
+        XmlNode root = xmlDoc.CreateNode(XmlNodeType.Element, "ConnectInfo", string.Empty);
+        xmlDoc.AppendChild(root);
+
+        // 자식 노드 생성
+        XmlNode child = xmlDoc.CreateNode(XmlNodeType.Element, "Last", string.Empty);
+        root.AppendChild(child);
+
+        // 자식 노드에 들어갈 속성 생성
+        XmlElement name = xmlDoc.CreateElement("Name");
+        name.InnerText = "No Name";
+        child.AppendChild(name);
+
+        XmlElement Ip = xmlDoc.CreateElement("Ip");
+        Ip.InnerText = "No Ip";
+        child.AppendChild(Ip);
+
+        //AssetDatabase.CreateAsset(xmlDoc, "/Assets/Resources/ConnectInfo.xml");
+        //AssetDatabase.SaveAssets();
+        //xmlDoc.Save("./Assets/Resources/ConnectInfo.xml");
+
+    }
+
+    void OverLaped_Data(string ip, string name)//최종 데이터 덮어쓰기
+    {
+        /*
+        TextAsset textAsset = (TextAsset)Resources.Load("ConnectInfo");
+        XmlDocument xmlDoc = new XmlDocument();
+        xmlDoc.LoadXml(textAsset.text);
+
+        XmlNodeList nodes = xmlDoc.SelectNodes("ConnectInfo/Last");
+        XmlNode character = nodes[0];
+
+        character.SelectSingleNode("Name").InnerText = name;
+        character.SelectSingleNode("Ip").InnerText = ip;
+        */
+
+        //xmlDoc.Save("ConnectInfo.xml");
+
+
+        last.name = name;
+        last.ip = ip;
+        try
+        {
+            var path = Application.persistentDataPath + "/LastData.xml";
+            var serializer = new XmlSerializer(typeof(OptionSet));
+            var stream = new FileStream(path, FileMode.Create);
+            serializer.Serialize(stream, last);
+            stream.Close();
+        }
+        catch (Exception e)
+        {
+            Debug.Log("저장 에러???");
+            //error
+        }
+    }
 }
+
+
 
 public class IAsyncClient {
     public Socket sck=null;
@@ -282,5 +469,22 @@ public class IAsyncClient {
     public bool signalread = true;
     public IAsyncClient() {
         recv_signal = 0;
+    }
+}
+
+[XmlRoot("Option")]
+public class OptionSet
+{
+    [XmlArrayItem("Name")]
+    [XmlAttribute("name")]
+    public string name;
+    
+    [XmlArrayItem("Ip")]
+    [XmlAttribute("ip")]
+    public string ip;
+
+    public OptionSet() {
+        name = "No Name";
+        ip = "No Ip";
     }
 }

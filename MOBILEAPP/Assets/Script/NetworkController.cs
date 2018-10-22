@@ -38,9 +38,11 @@ public class NetworkController : MonoBehaviour
     public const byte PP_SKILLSET = 31;
 
     public const byte CS_REQCHR = 32;
-    public const byte SC_SELECT = 33;
+    public const byte SC_SELECT = 33;//셀렉트 씬
     public const byte CS_SKILL = 34;
     public const byte CS_UPGRADE = 35;
+    public const byte SC_IN_GAME = 36;
+    public const byte CS_CAMERA_CHANGE = 37;
     public const byte S_NULL = 125;
 
     void Start()
@@ -154,14 +156,27 @@ public class NetworkController : MonoBehaviour
                 break;
             case CS_SKILL:
                 if (send_data.Length != 104) {
-                    Debug.Log("net_send 오류 byte array의 길이가 표준치와 다릅니다. 패킷의 길이를 확인하세요.원래 98 현재 패킷 길이 " + send_data.Length);
+                    Debug.Log("net_send 오류 byte array의 길이가 표준치와 다릅니다. 패킷의 길이를 확인하세요.원래 104 현재 패킷 길이 " + send_data.Length);
                     return false;
                 }
                 break;
             case CS_UPGRADE:
                 if (send_data.Length != 85)
                 {
-                    Debug.Log("net_send 오류 byte array의 길이가 표준치와 다릅니다. 패킷의 길이를 확인하세요.원래 98 현재 패킷 길이 " + send_data.Length);
+                    Debug.Log("net_send 오류 byte array의 길이가 표준치와 다릅니다. 패킷의 길이를 확인하세요.원래 85 현재 패킷 길이 " + send_data.Length);
+                    return false;
+                }
+                break;
+            case SC_SELECT:
+                if (send_data.Length != 92) {
+                    Debug.Log("net_send 오류 byte array의 길이가 표준치와 다릅니다. 패킷의 길이를 확인하세요.원래 92 현재 패킷 길이 " + send_data.Length);
+                    return false;
+                }
+                break;
+            case CS_CAMERA_CHANGE:
+                if (send_data.Length != 93)
+                {
+                    Debug.Log("net_send 오류 byte array의 길이가 표준치와 다릅니다. 패킷의 길이를 확인하세요.원래 93 현재 패킷 길이 " + send_data.Length);
                     return false;
                 }
                 break;
@@ -283,4 +298,25 @@ public struct CS_SKILLSET_PACKET
 public struct CS_UPGRADE_PACKET {
     public byte id;
     public byte up_sg;
+}
+
+[Serializable]
+public struct CS_SELECT_PACKET // 92
+{
+    public byte id;
+    public byte model;
+    public byte type;
+}
+
+[Serializable]
+public struct SC_TYPE_PACKET//75
+{
+    public byte type;
+}
+
+[Serializable]
+public struct CS_CAMERA_PACKET//93
+{
+    public byte type;//0: 줌 1:회전 2:이동 3: 타겟
+    public float x,y;
 }

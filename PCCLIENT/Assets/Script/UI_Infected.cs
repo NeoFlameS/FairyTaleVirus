@@ -14,9 +14,9 @@ public class UI_Infected : MonoBehaviour {
 
     public void init()
     {
-        u_maxinfected = 10;
-        u_nowinfected = 5;
-        u_slider_infected.maxValue = 10;
+        u_maxinfected = 20;
+        u_nowinfected = 0;
+        u_slider_infected.maxValue = 20;
     }
 
     public void init(byte[] v) {
@@ -27,6 +27,7 @@ public class UI_Infected : MonoBehaviour {
 
     public bool damaged(int x) {
         u_nowinfected += x;
+        GameObject.Find("ResultData").GetComponent<ResultDataSet>().corrupt = u_nowinfected;//0624 홍승준 추가
         if (u_nowinfected >= u_maxinfected) return true;
         return false;
     }

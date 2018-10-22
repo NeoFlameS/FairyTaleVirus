@@ -3,18 +3,21 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
 
-public class PlayerCharacter : MonoBehaviour {
+public class PlayerCharacter : MonoBehaviour
+{
 
     public Character ch;
     float timer_canidle;
     float timer_atk;
     float[] timer_skillcool = new float[4];
     float atkspd;
+    public int stamina;
     int dmg;
 
-    List<BUFF> b;
+    List<BUFF> b = new List<BUFF>();
 
     public NavMeshAgent nm;
+    public Animator anim;
 
     public GameObject TESTTMP;
     public SkillSystem SS;
@@ -37,40 +40,47 @@ public class PlayerCharacter : MonoBehaviour {
         ch.ch_int = 0;
         ch.ch_mid = 0;
         ch.ch_matk = 0;
-        ch.ch_movespd = 20;
+        ch.ch_movespd = 10;
         ch.ch_atkspd = 1;
         ch.ch_stamina = 0;
 
         ch.nextorder = Character.IDLE;
         ch.skillnumber = 0;
-        
+
         ch.skill = new int[4];
         ch.point = transform.position;
         ch.skillnumber = 0;
 
+        stamina = ch.ch_stamina;
         atkspd = ch.ch_atkspd;
         dmg = ch.ch_atk;
-        
+
         nm = GetComponent<NavMeshAgent>();
+        SS = GameObject.Find("GAME SYSTEM").GetComponent<SkillSystem>();
+        anim = GetComponent<Animator>();
     }
 
-    public void init(PlayerCharacter c)
+    public void init(Character c)
     {
         ch = c;
 
+        stamina = ch.ch_stamina;
         atkspd = ch.ch_atkspd;
         dmg = ch.ch_atk;
 
         nm = GetComponent<NavMeshAgent>();
+        SS = GameObject.Find("GAME SYSTEM").GetComponent<SkillSystem>();
+        anim = GetComponent<Animator>();
     }
 
     //5.14 홍승준 함수 추가
-    public SC_CHARACTERINFO_PACKET CharacterInfo() {
-        SC_CHARACTERINFO_PACKET sc= new SC_CHARACTERINFO_PACKET();
-        sc.ch_atk = ch.ch_atk;
+    public SC_CHARACTERINFO_PACKET CharacterInfo()
+    {
+        SC_CHARACTERINFO_PACKET sc = new SC_CHARACTERINFO_PACKET();
+        sc.ch_atk = (byte)ch.ch_atk;
         sc.ch_atkspd = ch.ch_atkspd;
         sc.ch_int = ch.ch_int;
-        sc.ch_matk = ch.ch_matk;
+        sc.ch_matk = (byte)ch.ch_matk;
         sc.ch_mid = ch.ch_mid;
         sc.ch_movespd = ch.ch_movespd;
         sc.ch_stamina = ch.ch_stamina;
@@ -78,7 +88,7 @@ public class PlayerCharacter : MonoBehaviour {
         sc.ch_type = ch.ch_type;
         sc.ch_vit = ch.ch_vit;
         return sc;
-    } 
+    }
     //
     public void Attack(List<Monster> mm)
     {
@@ -88,11 +98,14 @@ public class PlayerCharacter : MonoBehaviour {
         }
         ch.state = Character.ATK;
         //모션
+        anim.SetInteger("State", ch.state);
         //TESETTESTSETSETSETSETSET
         Instantiate(TESTTMP, ch.target.transform.position, TESTTMP.transform.rotation);
 
-        if (true == ch.target.Damaged(dmg)) {
-            if (ch.target.target_count <= 1){
+        if (true == ch.target.Damaged(dmg))
+        {
+            if (ch.target.target_count <= 1)
+            {
                 Destroy(ch.target.gameObject);
                 ch.target = null;
                 mm.Remove(ch.target);
@@ -113,7 +126,7 @@ public class PlayerCharacter : MonoBehaviour {
                 {
                     case SkillSystem.BUF_ATK_UP:
                         {
-                            dmg -= b[i].value;
+                            dmg -= (int)b[i].value;
                             break;
                         }
                     case SkillSystem.BUF_ATKSPD_UP:
@@ -128,25 +141,22 @@ public class PlayerCharacter : MonoBehaviour {
             }
             i += 1;
         }
-
-        ch.state = Character.IDLE;
     }
 
     public void move(Vector3 mP)
     {
-        Debug.Log("recv");
         ch.point = new Vector3();
         ch.point = mP;
-        Debug.Log(ch.state);
         if (ch.state != Character.IDLE)
         {
-            Debug.Log("error");
             ch.nextorder = Character.MOVE;
             ch.point = mP;
             return;
         }
         ch.state = Character.MOVE;
         //모션
+        anim.SetInteger("State", ch.state);
+        anim.SetFloat("Blend", 1);
         nm.speed = ch.ch_movespd;
         nm.SetDestination(mP);
     }
@@ -154,16 +164,18 @@ public class PlayerCharacter : MonoBehaviour {
     public void idle()
     {
         ch.state = Character.IDLE;
+        anim.SetInteger("State", ch.state);
+        anim.SetFloat("Blend", 0);
         //모션
     }
 
-    public void UseSkill(byte key, float timer)
+    public void m_UseSkill(byte key) {
+        ch.nextorder = Character.SKILL;
+        ch.skillnumber = key;
+    }
+
+    public void UseSkill(byte key, float timer, List<Monster> L)
     {
-        if (ch.state == Character.MOVE) {
-            nm.Stop();
-            idle();
-            return;
-        }
         if (ch.state != Character.IDLE)
         {
             ch.nextorder = Character.SKILL;
@@ -171,59 +183,81 @@ public class PlayerCharacter : MonoBehaviour {
             return;
         }
 
-        SS.use_skill(this, ch.target, ch.id, key);
+        ch.state = Character.SKILL;
+        if (false == SS.use_skill(this, ch.target, ch.id, key, L)) {
+            ch.state = Character.IDLE;
+            return;
+        }
+        anim.SetInteger("State", ch.state);
+        Debug.Log("SKILL USING!!!");
         //스킬 사용~
         //skill[key];
         //모션
     }
 
-         public void UseBuff(byte type, int value, int duration)
+    public void UseBuff(byte type, int value, int duration)
     {
-         BUFF bf = new BUFF();
-         bf.type = type;
-         bf.value = value;
-         bf.duration = duration;
-         
-                 switch (type)
-        {
-             case SkillSystem.BUF_ATK_UP: {
-             dmg += value;
-                                 break;
-                             }
-                     case SkillSystem.BUF_ATKSPD_UP: {
-             atkspd += value;
-                                 break;
-                             }
-                 }
-         
-     }
+        BUFF bf = new BUFF();
+        bf.type = type;
+        bf.duration = duration;
 
-public void LocalUpdate(List<Monster> mm, float timer)
+        switch (type)
+        {
+            case SkillSystem.BUF_ATK_UP:
+                {
+                    bf.value = dmg * value / 100;
+                    dmg += value;
+                    break;
+                }
+            case SkillSystem.BUF_ATKSPD_UP:
+                {
+                    bf.value = atkspd * value / 100;
+                    atkspd += value;
+                    break;
+                }
+        }
+
+        b.Add(bf);
+    }
+
+    public void AnimAlert(byte State) {
+        ch.state = State;
+        anim.SetInteger("State", ch.state);
+        anim.SetFloat("Blend", 0);
+    }
+
+    public void LocalUpdate(List<Monster> mm, float timer)
     {
         //find
-        if (ch.target == null) {
-            foreach (Monster m in mm) {
+        if (ch.target == null)
+        {
+            foreach (Monster m in mm)
+            {
                 if (null != m)
                 {
-                    if (15 > Vector2.Distance(m.transform.position, transform.position))
+                    if (225 > (m.transform.position.x - transform.position.x) * (m.transform.position.x - transform.position.x)
+                        + (m.transform.position.z - transform.position.z) * (m.transform.position.z - transform.position.z))
                     {
                         ch.target = m;
                         ch.target.target_count += 1;
                         break;
                     }
                 }
-                
+
             }
         }
 
         //lost
-        if (ch.target != null) {
-            if (15 < Vector2.Distance(ch.target.transform.position, transform.position))
+        if (ch.target != null)
+        {
+            if (225 <= (ch.target.transform.position.x - transform.position.x) * (ch.target.transform.position.x - transform.position.x)
+                        + (ch.target.transform.position.z - transform.position.z) * (ch.target.transform.position.z - transform.position.z))
             {
                 ch.target.target_count -= 1;
                 ch.target = null;
             }
-            else if (true == ch.target.died) {
+            else if (true == ch.target.died)
+            {
                 if (ch.target.target_count >= 2)
                 {
                     ch.target.target_count -= 1;
@@ -237,27 +271,34 @@ public void LocalUpdate(List<Monster> mm, float timer)
                 }
             }
         }
-        
-        if (ch.state == Character.MOVE) {
-            if ( 0.1 <= nm.remainingDistance) idle();
+
+        if (ch.state == Character.MOVE)
+        {
+            if (2 >= nm.remainingDistance)
+            {
+                idle();
+            }
         }
 
-        if (Character.IDLE == ch.state) {
+        if (Character.IDLE == ch.state)
+        {
             //start next order
-            switch (ch.nextorder) {
+            switch (ch.nextorder)
+            {
                 case Character.MOVE:
                     move(ch.point);
                     ch.nextorder = Character.IDLE;
                     break;
                 case Character.IDLE:
-                    if (timer_atk <= timer && ch.target != null) {
+                    if (timer_atk <= timer && ch.target != null)
+                    {
                         Attack(mm);
                         timer_atk = timer + 1 / ch.ch_atkspd;
                         ch.nextorder = Character.IDLE;
                     }
                     break;
                 case Character.SKILL:
-                    UseSkill(ch.skillnumber, timer);
+                    UseSkill(ch.skillnumber, timer, mm);
                     ch.nextorder = Character.IDLE;
                     break;
             }
@@ -265,16 +306,16 @@ public void LocalUpdate(List<Monster> mm, float timer)
 
     }
 
-     struct BUFF
+    struct BUFF
     {
-     public bool atk()
+        public bool atk()
         {
-             duration -= 1;
-                     if (0 <= duration) return true;
-                     else return false;
-                 }
-     public byte type;
-     public int value;
-     public int duration;
- }
+            duration -= 1;
+            if (0 <= duration) return true;
+            else return false;
+        }
+        public byte type;
+        public float value;
+        public int duration;
+    }
 }

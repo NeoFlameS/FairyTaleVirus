@@ -7,57 +7,68 @@ using System.Xml.Serialization;
 using UnityEngine.SceneManagement;
 
 
-public class MainGameSystem : MonoBehaviour {
-    public UI_Infected ui_infected;
-    public PlayerIcon[] ui_PI;
-    public CharacterSet u_CS;
-    public PlayerCharacter[] PC = new PlayerCharacter[4];
-    public SkillSystem SS;
+public class MainGameSystem : MonoBehaviour
+{
+    public const int         MAXSTAGECOUNT = 1;
+    public const float       REGENTIME = 1;
+    public const float       RESTTIME = 35;
+    public const int         MONSTERTYPECOUNT = 3;
+    public const int         MAXCHARACTER = 2;
+    
+    public const int         DIF_EASY = 0;
+    public const int         DIF_NORMAL = 1;
+    public const int         DIF_HARD = 2;
 
-    public GameObject[] CharacterSet = new GameObject[1];
+    public UI_Infected       ui_infected;
+    public PlayerIcon[]      ui_PI;
+    public CharacterSet      u_CS;
+    public PlayerCharacter[] PC                = new PlayerCharacter[4];
+    public SkillSystem       SS;
+    public Camera            C;
 
-    public GameObject[] Cursor = new GameObject[4];
-    public Vector2[] cursormovevector = new Vector2[4];
-    public bool[] iscconnected = { false, false, false, false };
+    public GameObject[]     CharacterSet       = new GameObject[MAXCHARACTER];
 
-    public const int MAXSTAGECOUNT = 1;
-    public const float REGENTIME = 1;
-    public const float RESTTIME = 5000;
-    public const int MONSTERTYPECOUNT = 3;
+    public GameObject[]     Cursor             = new GameObject[4];
+    public Vector2[]        cursormovevector   = new Vector2[4];
+    public Vector2[]        cursormovemultiply = new Vector2[4];
+    public bool[]           iscconnected       = { false, false, false, false };
 
-    public bool[] moveorder;
+    public bool[]           moveorder;
+    public ResultDataSet    rds;
 
-    StageInfo[] stageinfoset;
+
+    StageInfo[]             stageinfoset;
     StageInfo stageinfo = new StageInfo();
     byte Round;
     byte Stage;
     byte difficulty;
     byte monsterwave;
     byte monstercount = 0;
-    bool started = false;
-    byte usercount = 0;
+    public bool started = false;
+    public byte usercount = 0;
 
-    float u_timer;
-    float time = RESTTIME;
+    public float g_yrotation_m;
+    float g_yrotation;
+
+    public float u_timer;
+    public float time = RESTTIME;
 
     public GameObject[] monsterpref = new GameObject[MONSTERTYPECOUNT];
     public GameObject[] monstergenpoint = new GameObject[3];
 
     public List<Monster> M;
 
-
-
     // Use this for initialization
     void Start () {
+        cursormovevector = new Vector2[4];
+        cursormovemultiply = new Vector2[4];
         //캐릭터 생성~
         //커서 생성~
-
+        SS = GetComponent<SkillSystem>();//5.31 홍승준 추가
+        GameObject.Find("Select Manager(Clone)").GetComponent<SelectManager>().not_show = true;//5.31 홍승준 추가
         //스테이지 불러오기~
         Stage = 1;
         started = false;
-        monsterpref[0] = Resources.Load<GameObject>("3D/Monster1R") as GameObject;
-        monsterpref[1] = Resources.Load<GameObject>("3D/Monster1Y") as GameObject;
-        monsterpref[2] = Resources.Load<GameObject>("3D/Monster1B") as GameObject;
 
         Character[] l_ch = new Character[4];
         moveorder = new bool[4] { false, false, false, false };
@@ -72,10 +83,15 @@ public class MainGameSystem : MonoBehaviour {
 
         for (int i = 0; i < 4; ++i) {
             //ui_PI[i] = GameObject.Find("PLAYERICON" + i).GetComponent<PlayerIcon>();
+            cursormovemultiply[i] = new Vector2(0, 0);
+            cursormovevector[i] = new Vector2(0, 0);
 
             ui_PI[i].init();
 
-            if (125 == l_ch[i].ch_type) continue;
+            if (125 == l_ch[i].ch_type) {
+                ui_PI[i].show();
+                continue;
+            }
             ui_PI[i].connected = true;
             iscconnected[i] = true;
             usercount += 1;
@@ -85,17 +101,17 @@ public class MainGameSystem : MonoBehaviour {
 
             ui_PI[i].show();
 
-            Cursor[i].active = true;
-
-
-            PC[i] = Instantiate(CharacterSet[l_ch[i].ch_type], new Vector3(-32, 7355, -28), Quaternion.identity).GetComponent<PlayerCharacter>();
+            Cursor[i].SetActive(true);
+            
+            PC[i] = Instantiate(CharacterSet[l_ch[i].ch_type], Cursor[i].transform.position, Quaternion.identity).GetComponent<PlayerCharacter>();
             PC[i].init(l_ch[i]);
+            skills[i] = new int[4];
             skills[i] = l_ch[i].skill;
         }
 
         ui_infected.init();
         ui_infected.show();
-        SS.init(skills);
+        SS.init(skills, PC);
 
         //Stage data load
         try
@@ -108,7 +124,7 @@ public class MainGameSystem : MonoBehaviour {
 
             int count = 0;
 
-            stageinfoset = new StageInfo[1];            
+            stageinfoset = new StageInfo[3];            
 
             foreach (XmlNode node in nodes)
             {
@@ -134,8 +150,6 @@ public class MainGameSystem : MonoBehaviour {
         }
 
         time = u_timer + RESTTIME;
-
-        PC[0].init();
     }
 	
     public void reconnected(int id)
@@ -150,27 +164,27 @@ public class MainGameSystem : MonoBehaviour {
 
     public void move(float x, float y, int id) {
         //cursor move
-        cursormovevector[id] = new Vector2(x * 20, y*20);
-        if (x == 0 && y == 0) moveorder[id] = true;
+        //if (true == moveorder[id]) return;
+        if (x == 0 && y == 0)
+        {
+            cursormovemultiply[id] = new Vector2(0, 0);
+            moveorder[id] = true;
+        }
+        else {
+            
+            cursormovevector[id] = new Vector2(x, y);
+            cursormovevector[id] *= 20;
+            cursormovemultiply[id].x = cursormovevector[id].x * Mathf.Cos(g_yrotation) - cursormovevector[id].y * Mathf.Sin(g_yrotation);
+            cursormovemultiply[id].y = cursormovevector[id].x * Mathf.Sin(g_yrotation) + cursormovevector[id].y * Mathf.Cos(g_yrotation);
+        }
     }
 
-    public void click(int id, int btnnumber) {
+    public void click(int id, byte btnnumber) {
+        PC[id].m_UseSkill(btnnumber);
         //switch skill~
         return;
     }
 
-    /*
-    //CURSORCONTROLL
-    public void TestMonster() {
-        monsterpref = Resources.Load<GameObject>("3D/Monster") as GameObject;
-        GameObject l_temp = new GameObject();
-
-        l_temp = Instantiate(monsterpref,
-        monstergenpoint[0].transform.position,
-        Quaternion.identity);
-
-        l_temp.GetComponent<Monster>().Move();
-    }*/
 
     //monster arrived endpoint
     private void OnTriggerEnter(Collider other)
@@ -178,13 +192,18 @@ public class MainGameSystem : MonoBehaviour {
         if (other.gameObject.tag != "Monster") return;
         bool gameover = ui_infected.damaged(other.gameObject.GetComponent<Monster>().mon_infect);
         ui_infected.show();
-        if (true == gameover) SceneManager.LoadScene("Result");
+        if (true == gameover) {
+            rds.iscleard = false;
+            SceneManager.LoadScene("Scene_Result");
+        }
         //gameover scene
     }
     
     //스테이지
     public void Update()
     {
+        g_yrotation = -1 * C.transform.rotation.eulerAngles.y * Mathf.Deg2Rad;
+
 
         //MONSTER ORDER
         u_timer += Time.deltaTime;
@@ -194,17 +213,16 @@ public class MainGameSystem : MonoBehaviour {
             started = true;
             time = u_timer + REGENTIME;
         }
-
-        if (true == started && time <= u_timer && monstercount < monsterwave)
+        else if (true == started && time <= u_timer && monstercount < monsterwave)
         {
-            int j = UnityEngine.Random.Range(0, 3);
+            int j = UnityEngine.Random.Range(0, monstergenpoint.Length);
             int mon_type = UnityEngine.Random.Range(0, MONSTERTYPECOUNT);
             GameObject l_temp = new GameObject();
             //TETSLETSETTESTESTESTESTESTESTESTESTESTESTESTESTESTESTESTESTESTES
             l_temp = Instantiate(monsterpref[mon_type], monstergenpoint[j].transform.position, Quaternion.identity);
 
             Monster mm = l_temp.GetComponent<Monster>();
-            mm.init(Round, Stage, usercount, mon_type);
+            mm.init(Round, Stage, usercount, mon_type, difficulty);
             mm.Move();
             M.Add(mm);
 
@@ -213,10 +231,19 @@ public class MainGameSystem : MonoBehaviour {
             {
                 time = u_timer + RESTTIME;
                 started = false;
-                Round += 1;
-                //monsterwave = stageinfo.monsterperwave[Round];
+                if (Round < stageinfo.round-1)
+                {
+                    Round += 1;
+                    monsterwave = stageinfo.monsterperwave[Round];
+                }
+                monstercount = 0;
             }
             time = u_timer + REGENTIME;
+        }
+        if (true == started && Round >= stageinfo.round && M.Count == 0)
+        {
+            rds.iscleard = true;
+            GameObject.Find("FadeInOut").GetComponent<FadeInOut>().winGame();
         }
 
         //CHARACTER ORDER & cursormove
@@ -225,32 +252,16 @@ public class MainGameSystem : MonoBehaviour {
             {
                 PC[i].LocalUpdate(M, u_timer);
                 Cursor[i].transform.position = new Vector3(
-                    Mathf.Clamp(Cursor[i].transform.position.x + (cursormovevector[i].x * Time.deltaTime), PC[i].transform.position.x - 50, PC[i].transform.position.x + 50),
-                    7351,
-                   Mathf.Clamp(Cursor[i].transform.position.z + (cursormovevector[i].y * Time.deltaTime), PC[i].transform.position.z - 50, PC[i].transform.position.z + 50));
+                    Mathf.Clamp(Cursor[i].transform.position.x + (cursormovemultiply[i].x * Time.deltaTime), PC[i].transform.position.x - 50, PC[i].transform.position.x + 50),
+                    Cursor[i].transform.position.y,
+                   Mathf.Clamp(Cursor[i].transform.position.z + (cursormovemultiply[i].y * Time.deltaTime), PC[i].transform.position.z - 50, PC[i].transform.position.z + 50));
                 if (moveorder[i])
                 {
-                    moveorder[i] = false;
                     PC[i].move(Cursor[i].transform.position);
+                    moveorder[i] = false;
                 }
             }
         }
-        
-        //TESTTTTTTTTTTTTTTTTTTTTTTTTTTTT
-        if (Input.GetMouseButton(0)) // TESET
-        {
-            started = true;
-            time = u_timer + REGENTIME;
-        }
-        if (Input.GetMouseButton(1)) // TESET
-        {
-            move(1, 1, 0);
-        }
-        if (Input.GetMouseButton(2)) // TESET
-        {
-            move(0, 0, 0);
-        }
-
     }
 }
 

@@ -14,7 +14,7 @@ public class SystemManager : MonoBehaviour {
 	void Update () {
         timer += Time.deltaTime;
 		if (timer >= 3) {
-			SceneManager.LoadScene ("ConnectingScene");
+			SceneManager.LoadScene ("Scene_Connecting");
 		}
 	}
 }

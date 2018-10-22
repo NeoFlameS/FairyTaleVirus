@@ -16,6 +16,12 @@ public class PlayerIcon : MonoBehaviour {
 
     public bool connected;
 
+
+    public void Start()
+    {
+        init();
+    }
+
     public void init()
     {
         nickname = "NONE";
